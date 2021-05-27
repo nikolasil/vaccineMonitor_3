@@ -7,7 +7,7 @@
 
 #include "util.h"
 
-int checkArguments(int argc, char* argv[], int& numMonitors, int& bufferSize, int& sizeOfBloom, string& input_dir)
+int checkArguments(int argc, char* argv[], int& numMonitors, int& socketBufferSize, int& cyclicBufferSize, int& sizeOfBloom, string& input_dir, int& numThreads)
 {
     if (argc != 9)
     {
@@ -15,7 +15,7 @@ int checkArguments(int argc, char* argv[], int& numMonitors, int& bufferSize, in
         return 0;
     }
     struct stat buffer;
-    string args[4] = { "-m", "-b", "-s", "-i" };
+    string args[6] = { "-m", "-b", "-c", "-s", "-i" ,"-t" };
     int pos = 1;
     while (1) {
         if (pos > 7) {
@@ -23,7 +23,7 @@ int checkArguments(int argc, char* argv[], int& numMonitors, int& bufferSize, in
             break;
         }
         int i = 0;
-        for (i = 0; i < 4; i++) {
+        for (i = 0; i < 6; i++) {
             // cout << "pos=" << pos << ",i=" << i << ",arg=" << string(argv[pos]) << ",array=" << args[i] << endl;
             if (string(argv[pos]).compare(args[i]) == 0) {
                 args[i] = ""; // clear it for future checking
@@ -59,7 +59,24 @@ int checkArguments(int argc, char* argv[], int& numMonitors, int& bufferSize, in
                         cout << "ERROR The bufferSize must be unsigned integer" << endl;
                         return 0;
                     }
-                    bufferSize = atoi(argv[pos + 1]);
+                    socketBufferSize = atoi(argv[pos + 1]);
+                }
+                else if (string(argv[pos]) == "-c") {
+                    // cout << "-b" << endl;
+
+                    string c = string(argv[pos + 1]);
+                    std::string::const_iterator it = c.begin();
+                    while (it != c.end() && isdigit(*it))
+                        ++it;
+
+                    bool check = !c.empty() && it == c.end();
+
+                    if (atoi(argv[pos + 1]) <= 0 || !check)
+                    {
+                        cout << "ERROR The bufferSize must be unsigned integer" << endl;
+                        return 0;
+                    }
+                    cyclicBufferSize = atoi(argv[pos + 1]);
                 }
                 else if (string(argv[pos]) == "-s") {
                     // cout << "-s" << endl;
@@ -87,6 +104,23 @@ int checkArguments(int argc, char* argv[], int& numMonitors, int& bufferSize, in
                     }
                     input_dir = string(argv[pos + 1]);
                 }
+                else if (string(argv[pos]) == "-t") {
+                    // cout << "-m" << endl;
+
+                    string c = string(argv[pos + 1]);
+                    std::string::const_iterator it = c.begin();
+                    while (it != c.end() && isdigit(*it))
+                        ++it;
+
+                    bool check = !c.empty() && it == c.end();
+
+                    if (atoi(argv[pos + 1]) <= 0 || !check)
+                    {
+                        cout << "ERROR The numMonitors must be unsigned integer" << endl;
+                        return 0;
+                    }
+                    numThreads = atoi(argv[pos + 1]);
+                }
                 else {
                     cout << "Error in arguments" << endl;
                 }
@@ -94,8 +128,8 @@ int checkArguments(int argc, char* argv[], int& numMonitors, int& bufferSize, in
                 break;
             }
         }
-        if (i == 4) {
-            cout << "Error Arguments must start with -m,-b,-s and -i" << endl;
+        if (i == 6) {
+            cout << "Error Arguments must start with -m,-b,-c,-s,-i & -t" << endl;
             break;
         }
     }
