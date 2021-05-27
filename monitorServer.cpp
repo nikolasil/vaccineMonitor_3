@@ -23,17 +23,6 @@ using namespace std;
 
 monitorServer monitor = monitorServer();
 
-void signal_handler_SIGINT_SIGQUIT(int signo) {
-    // cout << "signal_handler_SIGINT_SIGQUIT" << endl;
-    monitor.makeLogFile();
-    monitor.suicide();
-}
-void signal_handler_SIGUSR1(int signo) {
-    // cout << "signal_handler_SIGUSR1" << endl;
-    monitor.readFilesAndCreateStructures();
-    monitor.sendBlooms();
-}
-
 void monitorServer::suicide() {
     if (this->tree != NULL)
         delete this->tree;
@@ -49,8 +38,7 @@ void monitorServer::suicide() {
         delete this->filesReaded;
     if (this->command != NULL)
         delete[] this->command;
-    close(readFD);
-    close(writeFD);
+
     cout << "monitorServer " << getpid() << " Terminated" << endl;
     exit(1);
 }
@@ -166,25 +154,15 @@ void monitorServer::makeLogFile() {
     logfile.close();
 }
 
-monitorServer::monitorServer() {
+monitorServer::monitorServer() {}
 
-    handlerSIGINT_SIGQUIT.sa_handler = signal_handler_SIGINT_SIGQUIT;
-    sigemptyset(&(handlerSIGINT_SIGQUIT.sa_mask));
-    handlerSIGINT_SIGQUIT.sa_flags = SA_RESTART;
-    sigaction(SIGQUIT, &handlerSIGINT_SIGQUIT, NULL);
-    sigaction(SIGINT, &handlerSIGINT_SIGQUIT, NULL);
+void monitorServer::start(int p, int t, int sb, int cb, int bloom, char** paths) {
 
-    handlerSIGUSR1.sa_handler = signal_handler_SIGUSR1;
-    sigemptyset(&(handlerSIGUSR1.sa_mask));
-    handlerSIGUSR1.sa_flags = SA_RESTART;
-    sigaction(SIGUSR1, &handlerSIGUSR1, NULL);
-}
-
-void monitorServer::start(string r, string w) {
-    this->readFifo = r;
-    this->writeFifo = w;
-    readFD = open(this->readFifo.c_str(), O_RDONLY);
-    writeFD = open(this->writeFifo.c_str(), O_WRONLY);
+    this->port = p;
+    this->numThreads = t;
+    this->socketBufferSize = sb;
+    this->cyclicBufferSize = cb;
+    this->sizeOfBloom = bloom;
 
     this->tree = NULL;
     this->countries = new stringList();

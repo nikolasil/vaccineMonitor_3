@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     // travelMonitorClient mainMonitor = travelMonitorClient(numMonitors, bufferSize, sizeOfBloom, input_dir);
     mainMonitor.start(numMonitors, socketBufferSize, cyclicBufferSize, sizeOfBloom, input_dir, numThreads);
     mainMonitor.findIP();
-    // mainMonitor.createMonitors();
+    mainMonitor.createServers();
     // mainMonitor.openFifos();
     // mainMonitor.sendCredentials();
     // mainMonitor.sendCountries();

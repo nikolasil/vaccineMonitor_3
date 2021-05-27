@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <string>
-#include <signal.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -25,8 +24,8 @@ public:
     void start(int m, int b, int c, int s, string dir, int t);
 
     void findIP();
-    void createMonitors();
-    void createMonitor(int i);
+    void createServers();
+    void createServer(int i);
     void openFifos();
     void openFifo(int i);
     void sendCredentials();
@@ -75,8 +74,6 @@ private:
     char machineName[256];
     char externalAddress[256];
 
-    struct sigaction handlerSIGINT_SIGQUIT;
-    struct sigaction handlerSIGCHLD;
     string* command;
     int numMonitors;
     int socketBufferSize;
@@ -90,6 +87,7 @@ private:
 
     stringList* viruses;
     statsList* requests;
+    stringList* filePaths;
     stringList* countries;
     bloomFilterList* blooms;
 };

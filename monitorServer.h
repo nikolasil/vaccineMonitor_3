@@ -14,10 +14,9 @@ using namespace std;
 
 class monitorServer {
 public:
-    monitorServer(string r, string w);
     monitorServer();
     ~monitorServer();
-    void start(string r, string w);
+    void start(int p, int t, int sb, int cb, int bloom, char** paths);
 
     void receiveCredentials();
     void receiveCountries();
@@ -50,8 +49,8 @@ public:
     void waitForCommands();
 private:
     int id;
-    struct sigaction handlerSIGINT_SIGQUIT;
-    struct sigaction handlerSIGUSR1;
+    int port;
+    int numThreads;
     string* command;
     int t;
     int f;
@@ -61,7 +60,8 @@ private:
     int readFD;
     int writeFD;
 
-    int bufferSize;
+    int socketBufferSize;
+    int cyclicBufferSize;
     int bloomSize;
 
     treeNode* tree;
