@@ -11,7 +11,7 @@
 #include <fstream>
 #include <signal.h>
 
-#include "monitor.h"
+#include "monitorServer.h"
 #include "DataStructures/stringList/stringList.h"
 #include "DataStructures/bloomFilter/bloomFilter.h"
 #include "DataStructures/skipList/skipList.h"
@@ -21,7 +21,7 @@
 
 using namespace std;
 
-Monitor monitor = Monitor();
+monitorServer monitor = monitorServer();
 
 void signal_handler_SIGINT_SIGQUIT(int signo) {
     // cout << "signal_handler_SIGINT_SIGQUIT" << endl;
@@ -34,7 +34,7 @@ void signal_handler_SIGUSR1(int signo) {
     monitor.sendBlooms();
 }
 
-void Monitor::suicide() {
+void monitorServer::suicide() {
     if (this->tree != NULL)
         delete this->tree;
     if (this->skipLists != NULL)
@@ -51,11 +51,11 @@ void Monitor::suicide() {
         delete[] this->command;
     close(readFD);
     close(writeFD);
-    cout << "Monitor " << getpid() << " Terminated" << endl;
+    cout << "monitorServer " << getpid() << " Terminated" << endl;
     exit(1);
 }
 
-void Monitor::waitForCommands() {
+void monitorServer::waitForCommands() {
     while (1)
     {
         // cout << "Waiting for commands " << this->id << endl;
@@ -78,7 +78,7 @@ void Monitor::waitForCommands() {
     }
 }
 
-void Monitor::travelRequest(string* arguments, int length) {
+void monitorServer::travelRequest(string* arguments, int length) {
     id = stoi(arguments[1]);
     date checkDate = date((arguments[2]));
     string countryFrom = arguments[3];
@@ -107,7 +107,7 @@ void Monitor::travelRequest(string* arguments, int length) {
     }
 }
 
-void Monitor::searchVaccinationStatus(string* arguments, int length) {
+void monitorServer::searchVaccinationStatus(string* arguments, int length) {
     id = stoi(arguments[1]);
     treeNode* citizen = this->tree->search(this->tree, id);
     if (citizen != NULL) {
@@ -152,7 +152,7 @@ void Monitor::searchVaccinationStatus(string* arguments, int length) {
     }
 }
 
-void Monitor::makeLogFile() {
+void monitorServer::makeLogFile() {
     int pid = getpid();
     ofstream logfile("logfiles/log_file." + to_string(pid));
     stringList* temp = this->countries;
@@ -166,7 +166,7 @@ void Monitor::makeLogFile() {
     logfile.close();
 }
 
-Monitor::Monitor() {
+monitorServer::monitorServer() {
 
     handlerSIGINT_SIGQUIT.sa_handler = signal_handler_SIGINT_SIGQUIT;
     sigemptyset(&(handlerSIGINT_SIGQUIT.sa_mask));
@@ -180,7 +180,7 @@ Monitor::Monitor() {
     sigaction(SIGUSR1, &handlerSIGUSR1, NULL);
 }
 
-void Monitor::start(string r, string w) {
+void monitorServer::start(string r, string w) {
     this->readFifo = r;
     this->writeFifo = w;
     readFD = open(this->readFifo.c_str(), O_RDONLY);
@@ -203,38 +203,38 @@ void Monitor::start(string r, string w) {
     this->f = 0;
 }
 
-Monitor::~Monitor() {
+monitorServer::~monitorServer() {
     close(readFD);
     close(writeFD);
 }
 
-void Monitor::receiveCredentials() {
-    // cout << "monitor cred " << readFD << endl;
+void monitorServer::receiveCredentials() {
+    // cout << "monitorServer cred " << readFD << endl;
     if (read(readFD, &this->id, sizeof(int)) == -1)
-        cout << "Monitor error in reading id with errno=" << errno << endl;
+        cout << "monitorServer error in reading id with errno=" << errno << endl;
     if (read(readFD, &this->bufferSize, sizeof(int)) == -1)
-        cout << "Monitor " << this->id << " error in reading bufferSize with errno=" << errno << endl;
+        cout << "monitorServer " << this->id << " error in reading bufferSize with errno=" << errno << endl;
     if (read(readFD, &this->bloomSize, sizeof(int)) == -1)
-        cout << "Monitor " << this->id << " error in reading bloomSize with errno=" << errno << endl;
+        cout << "monitorServer " << this->id << " error in reading bloomSize with errno=" << errno << endl;
     this->blooms = new bloomFilterList(this->bloomSize);
     checkNew(this->blooms);
     this->generalDirectory = receiveStr();
-    cout << "Monitor got" << this->id << ", bufferSize=" << this->bufferSize << ", bloomSize=" << this->bloomSize << ", generalDirectory=" << this->generalDirectory << endl;
+    cout << "monitorServer got" << this->id << ", bufferSize=" << this->bufferSize << ", bloomSize=" << this->bloomSize << ", generalDirectory=" << this->generalDirectory << endl;
 
 }
 
-void Monitor::receiveCountries() {
+void monitorServer::receiveCountries() {
     int end = 0;
     while (end != -1) {
         string country = receiveManyStr(&end);
         if (country != "") {
             this->addNewCountry(country);
-            cout << "Monitor " << this->id << " got country=" << country << endl;
+            cout << "monitorServer " << this->id << " got country=" << country << endl;
         }
     }
 }
 
-void Monitor::readFilesAndCreateStructures() {
+void monitorServer::readFilesAndCreateStructures() {
     stringList* country = this->countries;
 
     while (country != NULL) {
@@ -245,7 +245,7 @@ void Monitor::readFilesAndCreateStructures() {
         char* in2 = &in[0];
         input = opendir(in2);
 
-        // cout << "Monitor " << this->id << " " << in2 << endl;
+        // cout << "monitorServer " << this->id << " " << in2 << endl;
         if (input)
         {
             while ((dir = readdir(input)) != NULL)
@@ -253,7 +253,7 @@ void Monitor::readFilesAndCreateStructures() {
                 string FILE = dir->d_name;
                 if (FILE.compare("..") == 0 || FILE.compare(".") == 0)
                     continue;
-                // cout << "Monitor " << this->id << " " << FILE << endl;
+                // cout << "monitorServer " << this->id << " " << FILE << endl;
                 string fullpath = in;
                 fullpath.append("/");
                 fullpath.append(FILE);
@@ -267,7 +267,7 @@ void Monitor::readFilesAndCreateStructures() {
     }
 }
 
-void Monitor::addFromFile(string filepath)
+void monitorServer::addFromFile(string filepath)
 {
     // cout << filepath << endl;
     ifstream file(filepath);
@@ -285,7 +285,7 @@ void Monitor::addFromFile(string filepath)
     file.close();
 }
 
-void Monitor::addRecord(int length, string* words, string line)
+void monitorServer::addRecord(int length, string* words, string line)
 {
 
     citizenRecord* citizen;
@@ -354,7 +354,7 @@ void Monitor::addRecord(int length, string* words, string line)
     }
 }
 
-int Monitor::checkSyntaxRecord(string errorMessage, int length, string* words, string input)
+int monitorServer::checkSyntaxRecord(string errorMessage, int length, string* words, string input)
 {
     if (length < 7 || length > 8) // record must be only 7 or 8 words
     {
@@ -418,7 +418,7 @@ int Monitor::checkSyntaxRecord(string errorMessage, int length, string* words, s
     return 0;
 }
 
-void Monitor::sendBlooms() {
+void monitorServer::sendBlooms() {
 
     stringList* temp = this->viruses;
     while (temp != NULL) {
@@ -449,12 +449,12 @@ void Monitor::sendBlooms() {
     receiveDone();
 }
 
-void Monitor::receiveDone()
+void monitorServer::receiveDone()
 {
     receiveStr();
 }
 
-void Monitor::addNewVirus(string virusName)
+void monitorServer::addNewVirus(string virusName)
 {
     if (this->viruses->search(virusName) == NULL) // if we dont have that virus add it to the list of viruses
     {                                         // and make the bloom filter and the skiplist for that virus
@@ -464,7 +464,7 @@ void Monitor::addNewVirus(string virusName)
     }
 }
 
-void Monitor::addNewCountry(string countryName)
+void monitorServer::addNewCountry(string countryName)
 {
     if (this->countries->search(countryName) == NULL) // if we dont have that country add it to the list of Countries
     {
@@ -472,7 +472,7 @@ void Monitor::addNewCountry(string countryName)
     }
 }
 
-int Monitor::addNewFile(string file)
+int monitorServer::addNewFile(string file)
 {
     if (this->filesReaded->search(file) == NULL) // if we dont have that country add it to the list of Countries
     {
@@ -482,7 +482,7 @@ int Monitor::addNewFile(string file)
     return 0;
 }
 
-void Monitor::sendStr(string str) {
+void monitorServer::sendStr(string str) {
     char* to_tranfer = &str[0];
     int sizeOfStr = strlen(to_tranfer);
 
@@ -506,11 +506,11 @@ void Monitor::sendStr(string str) {
 
 }
 
-string Monitor::receiveStr() {
+string monitorServer::receiveStr() {
     int sizeOfStr;
     if (read(readFD, &sizeOfStr, sizeof(int)) == -1)
         if (errno != 4)
-            cout << "Monitor " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
+            cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
 
     string str = "";
     if (sizeOfStr > this->bufferSize) {
@@ -518,7 +518,7 @@ string Monitor::receiveStr() {
             char buff[this->bufferSize + 1];
             if (read(readFD, &buff[0], this->bufferSize) == -1)
                 if (errno != 4)
-                    cout << "Monitor " << this->id << " error in reading buff with errno=" << errno << endl;
+                    cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
             buff[this->bufferSize] = '\0';
             str.append(buff);
         }
@@ -527,18 +527,18 @@ string Monitor::receiveStr() {
         char buff[sizeOfStr + 1];
         if (read(readFD, &buff[0], sizeOfStr) == -1)
             if (errno != 4)
-                cout << "Monitor " << this->id << " error in reading buff with errno=" << errno << endl;
+                cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
         buff[sizeOfStr] = '\0';
         str.append(buff);
     }
     return str;
 }
 
-string Monitor::receiveManyStr(int* end) {
+string monitorServer::receiveManyStr(int* end) {
     int sizeOfStr;
     if (read(readFD, &sizeOfStr, sizeof(int)) == -1)
         if (errno != 4)
-            cout << "Monitor " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
+            cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
 
     if (sizeOfStr == -1) {
         *end = -1;
@@ -551,7 +551,7 @@ string Monitor::receiveManyStr(int* end) {
             char buff[this->bufferSize + 1];
             if (read(readFD, &buff[0], this->bufferSize) == -1)
                 if (errno != 4)
-                    cout << "Monitor " << this->id << " error in reading buff with errno=" << errno << endl;
+                    cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
             buff[this->bufferSize] = '\0';
             str.append(buff);
         }
@@ -560,7 +560,7 @@ string Monitor::receiveManyStr(int* end) {
         char buff[sizeOfStr + 1];
         if (read(readFD, &buff[0], sizeOfStr) == -1)
             if (errno != 4)
-                cout << "Monitor " << this->id << " error in reading buff with errno=" << errno << endl;
+                cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
         buff[sizeOfStr] = '\0';
         // cout << "test " << buff << endl;
         str.append(buff);
@@ -568,12 +568,12 @@ string Monitor::receiveManyStr(int* end) {
     return str;
 }
 
-void Monitor::printAllCountries() {
-    cout << "Monitor " << this->id << " has the countries:";
+void monitorServer::printAllCountries() {
+    cout << "monitorServer " << this->id << " has the countries:";
     this->countries->print();
 }
 
-void Monitor::printAllViruses() {
-    cout << "Monitor " << this->id << " has the viruses:";
+void monitorServer::printAllViruses() {
+    cout << "monitorServer " << this->id << " has the viruses:";
     this->viruses->print();
 }

@@ -1,31 +1,31 @@
 CC = g++ -std=c++11
 CFLAFS = -g
 
-TRAVEL_MONITOR_FILES = mainTravelMonitor.o travelMonitor.o util.o monitorCountryPairList.o monitorList.o bloomFilter.o stringList.o date.o statsList.o
-MONITOR_FILES = mainMonitor.o monitor.o util.o stringList.o citizen.o tree.o bloomFilter.o date.o skipList.o
+TRAVEL_MONITOR_CLIENT_FILES = mainTravelMonitorClient.o travelMonitorClient.o util.o monitorCountryPairList.o monitorList.o bloomFilter.o stringList.o date.o statsList.o
+MONITOR_SERVER_FILES = mainMonitorServer.o monitorServer.o util.o stringList.o citizen.o tree.o bloomFilter.o date.o skipList.o
 
-all: clean travelMonitor Monitor
+all: clean travelMonitorClient monitorServer
 
 # travelMonitor
-travelMonitor: $(TRAVEL_MONITOR_FILES)
-	$(CC) $(CFLAFS) -o travelMonitor $(TRAVEL_MONITOR_FILES)
+travelMonitorClient: $(TRAVEL_MONITOR_CLIENT_FILES)
+	$(CC) $(CFLAFS) -o travelMonitorClient $(TRAVEL_MONITOR_CLIENT_FILES)
 
 mainTravelMonitor.o:
-	$(CC) $(CFLAFS) -c mainTravelMonitor.cpp
+	$(CC) $(CFLAFS) -c mainTravelMonitorClient.cpp
 
-travelMonitor.o:
-	$(CC) $(CFLAFS) -c travelMonitor.cpp
+travelMonitorClient.o:
+	$(CC) $(CFLAFS) -c travelMonitorClient.cpp
 
 
 # Monitor
-Monitor: $(MONITOR_FILES)
-	$(CC) $(CFLAFS) -o Monitor $(MONITOR_FILES)
+monitorServer: $(MONITOR_SERVER_FILES)
+	$(CC) $(CFLAFS) -o monitorServer $(MONITOR_SERVER_FILES)
 
-mainMonitor.o:
-	$(CC) $(CFLAFS) -c mainMonitor.cpp
+mainMonitorServer.o:
+	$(CC) $(CFLAFS) -c mainMonitorServer.cpp
 
-monitor.o:
-	$(CC) $(CFLAFS) -c monitor.cpp
+monitorServer.o:
+	$(CC) $(CFLAFS) -c monitorServer.cpp
 
 
 # General Files
@@ -61,4 +61,4 @@ util.o:
 
 .PHONY: clean
 clean:
-	rm -f travelMonitor Monitor $(TRAVEL_MONITOR_FILES) $(MONITOR_FILES) pipes/* logfiles/*
+	rm -f travelMonitorClient monitorServer $(TRAVEL_MONITOR_CLIENT_FILES) $(MONITOR_SERVER_FILES) logfiles/*

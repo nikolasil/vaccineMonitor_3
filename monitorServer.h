@@ -1,5 +1,5 @@
-#ifndef MONITOR_H
-#define MONITOR_H
+#ifndef MONITORSERVER_H
+#define MONITORSERVER_H
 
 #include <iostream>
 #include <string>
@@ -12,11 +12,11 @@
 
 using namespace std;
 
-class Monitor {
+class monitorServer {
 public:
-    Monitor(string r, string w);
-    Monitor();
-    ~Monitor();
+    monitorServer(string r, string w);
+    monitorServer();
+    ~monitorServer();
     void start(string r, string w);
 
     void receiveCredentials();

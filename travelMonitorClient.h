@@ -1,9 +1,13 @@
-#ifndef VACCINEMONITOR_H
-#define VACCINEMONITOR_H
+#ifndef TREVELMONITORCLIENT_H
+#define TREVELMONITORCLIENT_H
 
 #include <iostream>
 #include <string>
 #include <signal.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 #include "DataStructures/monitorCountryPairList/monitorCountryPairList.h"
 #include "DataStructures/bloomFilter/bloomFilter.h"
@@ -13,14 +17,14 @@
 
 using namespace std;
 
-class travelMonitor {
+class travelMonitorClient {
 public:
-    travelMonitor(int m, int b, int s, string dir);
-    travelMonitor();
-    // ~travelMonitor();
+    travelMonitorClient(int m, int b, int s, string dir);
+    travelMonitorClient();
+    // ~travelMonitorClient();
     void start(int m, int b, int c, int s, string dir, int t);
 
-    void createFIFOs();
+    void findIP();
     void createMonitors();
     void createMonitor(int i);
     void openFifos();
@@ -66,6 +70,11 @@ public:
     monitorCountryPairList* getCountryToMonitor() { return this->countryToMonitor; }
 
 private:
+    struct hostent* ip;
+    struct in_addr** ip_addr;
+    char machineName[256];
+    char externalAddress[256];
+
     struct sigaction handlerSIGINT_SIGQUIT;
     struct sigaction handlerSIGCHLD;
     string* command;

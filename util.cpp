@@ -9,16 +9,16 @@
 
 int checkArguments(int argc, char* argv[], int& numMonitors, int& socketBufferSize, int& cyclicBufferSize, int& sizeOfBloom, string& input_dir, int& numThreads)
 {
-    if (argc != 9)
+    if (argc != 13)
     {
-        cout << "ERROR The number of arguments given must be 8" << endl;
+        cout << "ERROR The number of arguments given must be 12" << endl;
         return 0;
     }
     struct stat buffer;
     string args[6] = { "-m", "-b", "-c", "-s", "-i" ,"-t" };
     int pos = 1;
     while (1) {
-        if (pos > 7) {
+        if (pos > 12) {
             // cout << "Found the 4 args" << endl;
             break;
         }

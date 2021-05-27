@@ -2,12 +2,12 @@
 #include <string>
 #include <unistd.h>
 
-#include "travelMonitor.h"
+#include "travelMonitorClient.h"
 #include "util.h"
 
 using namespace std;
 
-extern travelMonitor mainMonitor;
+extern travelMonitorClient mainMonitor;
 
 int main(int argc, char* argv[])
 {
@@ -20,17 +20,17 @@ int main(int argc, char* argv[])
     if (!checkArguments(argc, argv, numMonitors, socketBufferSize, cyclicBufferSize, sizeOfBloom, input_dir, numThreads))
         return 1;
 
-    // travelMonitor mainMonitor = travelMonitor(numMonitors, bufferSize, sizeOfBloom, input_dir);
+    // travelMonitorClient mainMonitor = travelMonitorClient(numMonitors, bufferSize, sizeOfBloom, input_dir);
     mainMonitor.start(numMonitors, socketBufferSize, cyclicBufferSize, sizeOfBloom, input_dir, numThreads);
-    mainMonitor.createFIFOs();
-    mainMonitor.createMonitors();
-    mainMonitor.openFifos();
-    mainMonitor.sendCredentials();
-    mainMonitor.sendCountries();
-    mainMonitor.receiveBlooms();
-    mainMonitor.printAllViruses();
-    while (1) {
-        mainMonitor.startMenu();
-    }
-    return 0;
+    mainMonitor.findIP();
+    // mainMonitor.createMonitors();
+    // mainMonitor.openFifos();
+    // mainMonitor.sendCredentials();
+    // mainMonitor.sendCountries();
+    // mainMonitor.receiveBlooms();
+    // mainMonitor.printAllViruses();
+    // while (1) {
+    //     mainMonitor.startMenu();
+    // }
+    // return 0;
 }

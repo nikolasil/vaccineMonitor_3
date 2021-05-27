@@ -12,24 +12,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
-#include "travelMonitor.h" 
+#include "travelMonitorClient.h" 
 #include "util.h" 
 #include "DataStructures/bloomFilter/bloomFilter.h"
 #include "DataStructures/date/date.h"
 
 using namespace std;
 
-travelMonitor mainMonitor = travelMonitor();
+travelMonitorClient mainMonitor = travelMonitorClient();
 
 void signal_handler_SIGINT_SIGQUIT(int signo) {
-    // cout << "TravelMonitor signal_handler_SIGINT_SIGQUIT" << endl;
+    // cout << "travelMonitorClient signal_handler_SIGINT_SIGQUIT" << endl;
     mainMonitor.killAllMonitors();
     mainMonitor.suicide();
 }
 
 void signal_handler_SIGCHLD(int signo) {
-    // cout << "TravelMonitor signal_handler_SIGCHLD" << endl;
+    // cout << "travelMonitorClient signal_handler_SIGCHLD" << endl;
     pid_t pid;
     int status;
     cout << "Checking to see who terminated" << endl;
@@ -66,7 +70,7 @@ void signal_handler_SIGCHLD(int signo) {
 }
 
 
-void travelMonitor::suicide() {
+void travelMonitorClient::suicide() {
     if (this->monitors != NULL)
         delete this->monitors;
     if (this->countryToMonitor != NULL)
@@ -86,30 +90,30 @@ void travelMonitor::suicide() {
     kill(getpid(), SIGKILL);
 }
 
-void travelMonitor::sendSIGUSR1(int monitor) {
+void travelMonitorClient::sendSIGUSR1(int monitor) {
     kill(this->monitors->getPID(monitor), SIGUSR1);
 }
 
-void travelMonitor::sendSIGINT(int monitor) {
+void travelMonitorClient::sendSIGINT(int monitor) {
     kill(this->monitors->getPID(monitor), SIGINT);
 }
 
-void travelMonitor::sendSIGKILL(int monitor) {
+void travelMonitorClient::sendSIGKILL(int monitor) {
     kill(this->monitors->getPID(monitor), SIGKILL);
 }
 
-void travelMonitor::sendSIGTERM(int monitor) {
+void travelMonitorClient::sendSIGTERM(int monitor) {
     kill(this->monitors->getPID(monitor), SIGTERM);
 }
 
-void travelMonitor::killAllMonitors() {
+void travelMonitorClient::killAllMonitors() {
     for (int i = 0;i < numMonitors;i++) {
         cout << "Send SIGKILL to monitor " << this->monitors->getPID(i) << endl;
         sendSIGKILL(i);
     }
 }
 
-travelMonitor::travelMonitor() {
+travelMonitorClient::travelMonitorClient() {
     handlerSIGINT_SIGQUIT.sa_handler = signal_handler_SIGINT_SIGQUIT;
     sigemptyset(&(handlerSIGINT_SIGQUIT.sa_mask));
     handlerSIGINT_SIGQUIT.sa_flags = SA_RESTART;
@@ -122,7 +126,7 @@ travelMonitor::travelMonitor() {
     sigaction(SIGCHLD, &handlerSIGCHLD, NULL);
 }
 
-void travelMonitor::start(int m, int b, int c, int s, string dir, int t) {
+void travelMonitorClient::start(int m, int b, int c, int s, string dir, int t) {
     this->numMonitors = m;
     this->socketBufferSize = b;
     this->cyclicBufferSize = c;
@@ -139,37 +143,26 @@ void travelMonitor::start(int m, int b, int c, int s, string dir, int t) {
     checkNew(this->blooms);
 }
 
-void travelMonitor::createFIFOs() {
-    string directory = "pipes/";
-    for (int i = 0;i < numMonitors;i++) {
-        string fullname = "pipes/fifo_tW_mR_" + to_string(i);
-        char* fifoName = &fullname[0];
-
-        if (mkfifo(fifoName, 0666) == -1) {
-            if (errno != EEXIST) {
-                cout << "Problem in creating named pipe " << fifoName << endl;
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        fullname = "pipes/fifo_tR_mW_" + to_string(i);
-        fifoName = &fullname[0];
-
-        if (mkfifo(fifoName, 0666) == -1) {
-            if (errno != EEXIST) {
-                cout << "Problem in creating named pipe " << fifoName << endl;
-                exit(EXIT_FAILURE);
-            }
-        }
+void travelMonitorClient::findIP() {
+    if (gethostname(this->machineName, sizeof(this->machineName)) == -1) {
+        perror("gethostname");
+        exit(1);
     }
+    if ((this->ip = gethostbyname(this->machineName)) == NULL) {
+        perror("gethostbyname");
+        exit(1);
+    }
+    this->ip_addr = (struct in_addr**)this->ip->h_addr_list;
+    strcpy(this->externalAddress, inet_ntoa(*(this->ip_addr[0])));
+    cout << this->externalAddress << endl;
 }
 
-void travelMonitor::createMonitors() {
+void travelMonitorClient::createMonitors() {
     for (int i = 0;i < numMonitors;i++) {
         createMonitor(i);
     }
 }
-void travelMonitor::createMonitor(int i) {
+void travelMonitorClient::createMonitor(int i) {
     pid_t c_pid = fork();
     if (c_pid == -1) {
         perror("fork");
@@ -188,12 +181,12 @@ void travelMonitor::createMonitor(int i) {
 }
 
 
-void travelMonitor::openFifos() {
+void travelMonitorClient::openFifos() {
     for (int i = 0;i < numMonitors;i++) {
         openFifo(i);
     }
 }
-void travelMonitor::openFifo(int i) {
+void travelMonitorClient::openFifo(int i) {
 
     string pipe0 = "pipes/fifo_tW_mR_" + to_string(i);
     string pipe1 = "pipes/fifo_tR_mW_" + to_string(i);
@@ -204,13 +197,13 @@ void travelMonitor::openFifo(int i) {
 
 }
 
-void travelMonitor::sendCredentials() {
+void travelMonitorClient::sendCredentials() {
     for (int i = 0;i < numMonitors;i++) {
         sendCredential(i);
     }
 }
 
-void travelMonitor::sendCredential(int i) {
+void travelMonitorClient::sendCredential(int i) {
 
     int fd = this->monitors->getWriteFifo(i);
     // cout << "sendCredential i=" << i << ",writefd=" << fd << endl;
@@ -225,7 +218,7 @@ void travelMonitor::sendCredential(int i) {
 
 }
 
-void travelMonitor::sendCountries() {
+void travelMonitorClient::sendCountries() {
     int monitor = 0;
     int count;
 
@@ -259,7 +252,7 @@ void travelMonitor::sendCountries() {
             cout << "Error in writting end with errno=" << errno << endl;
     }
 }
-void travelMonitor::sendCountry(string country, int monitor, bool first) {
+void travelMonitorClient::sendCountry(string country, int monitor, bool first) {
     // cout << country << "->" << monitor << endl;
     if (first)
         this->addCountryToMonitor(country, monitor);
@@ -268,7 +261,7 @@ void travelMonitor::sendCountry(string country, int monitor, bool first) {
     sendStr(monitor, country);
 }
 
-void travelMonitor::receiveBlooms() {
+void travelMonitorClient::receiveBlooms() {
     fd_set fileDecriptorSet;
 
     int totalRead = 0;
@@ -298,7 +291,7 @@ void travelMonitor::receiveBlooms() {
     sendDone();
 }
 
-void travelMonitor::receiveBlooms(int i) {
+void travelMonitorClient::receiveBlooms(int i) {
     int end = 0;
     while (1) {
         string virus = receiveManyStr(i, &end);
@@ -335,12 +328,12 @@ void travelMonitor::receiveBlooms(int i) {
     }
 }
 
-void travelMonitor::sendDone() {
+void travelMonitorClient::sendDone() {
     for (int i = 0;i < numMonitors;i++)
         sendStr(i, "DONE");
 }
 
-void travelMonitor::startMenu() {
+void travelMonitorClient::startMenu() {
     while (1)
     {
         string input = getInput("Enter command: ");
@@ -373,7 +366,7 @@ void travelMonitor::startMenu() {
 }
 
 
-void travelMonitor::travelRequest(string* arguments, int length) {
+void travelMonitorClient::travelRequest(string* arguments, int length) {
     cout << endl;
     cout << "- Selected: /travelRequest" << endl;
     if (length == 6)
@@ -486,7 +479,7 @@ void travelMonitor::travelRequest(string* arguments, int length) {
     }
 }
 
-void travelMonitor::travelStats(string* arguments, int length) {
+void travelMonitorClient::travelStats(string* arguments, int length) {
     cout << endl;
     cout << "- Selected: /travelStats" << endl;
 
@@ -561,7 +554,7 @@ void travelMonitor::travelStats(string* arguments, int length) {
     }
 }
 
-void travelMonitor::addVaccinationRecords(string* arguments, int length) {
+void travelMonitorClient::addVaccinationRecords(string* arguments, int length) {
     cout << endl;
     cout << "- Selected: /addVaccinationRecords" << endl;
 
@@ -584,7 +577,7 @@ void travelMonitor::addVaccinationRecords(string* arguments, int length) {
     }
 }
 
-void travelMonitor::searchVaccinationStatus(string* arguments, int length) {
+void travelMonitorClient::searchVaccinationStatus(string* arguments, int length) {
     cout << endl;
     cout << "- Selected: /searchVaccinationStatus" << endl;
 
@@ -623,7 +616,7 @@ void travelMonitor::searchVaccinationStatus(string* arguments, int length) {
     }
 }
 
-void travelMonitor::sendStr(int monitor, string str) {
+void travelMonitorClient::sendStr(int monitor, string str) {
     int fd = this->monitors->getWriteFifo(monitor);
     char* to_tranfer = &str[0];
     int sizeOfStr = strlen(to_tranfer);
@@ -649,7 +642,7 @@ void travelMonitor::sendStr(int monitor, string str) {
 
 }
 
-string travelMonitor::receiveStr(int monitor) {
+string travelMonitorClient::receiveStr(int monitor) {
     int fd = this->monitors->getReadFifo(monitor);
     int sizeOfStr;
     if (read(fd, &sizeOfStr, sizeof(int)) == -1)
@@ -678,7 +671,7 @@ string travelMonitor::receiveStr(int monitor) {
     return str;
 }
 
-string travelMonitor::receiveManyStr(int monitor, int* end) {
+string travelMonitorClient::receiveManyStr(int monitor, int* end) {
     int fd = this->monitors->getReadFifo(monitor);
     int sizeOfStr;
     if (read(fd, &sizeOfStr, sizeof(int)) == -1)
@@ -712,21 +705,21 @@ string travelMonitor::receiveManyStr(int monitor, int* end) {
     return str;
 }
 
-void travelMonitor::addCountryToMonitor(string c, int m) {
+void travelMonitorClient::addCountryToMonitor(string c, int m) {
     if (this->countryToMonitor == NULL)
         this->countryToMonitor = new monitorCountryPairList(c, m);
     else
         this->countryToMonitor = this->countryToMonitor->add(c, m);
 }
 
-void travelMonitor::addRequest(string c, string v, date dt, bool s) {
+void travelMonitorClient::addRequest(string c, string v, date dt, bool s) {
     if (this->requests == NULL)
         this->requests = new statsList(c, v, dt, s);
     else
         this->requests = this->requests->add(c, v, dt, s);
 }
 
-void travelMonitor::addNewVirus(string virusName)
+void travelMonitorClient::addNewVirus(string virusName)
 {
     if (this->viruses->search(virusName) == NULL) // if we dont have that virus add it to the list of viruses
     {                                         // and make the bloom filter and the skiplist for that virus
@@ -735,23 +728,23 @@ void travelMonitor::addNewVirus(string virusName)
     }
 }
 
-void travelMonitor::addMonitor(int pid, int id) {
+void travelMonitorClient::addMonitor(int pid, int id) {
     if (this->monitors == NULL)
         this->monitors = new monitorList(pid, id);
     else
         this->monitors->add(pid, id);
 }
 
-void travelMonitor::addFdToMonitor(int m, int r, int w) {
+void travelMonitorClient::addFdToMonitor(int m, int r, int w) {
     this->monitors->addFD(m, r, w);
 }
 
-void travelMonitor::printAllViruses() {
+void travelMonitorClient::printAllViruses() {
     cout << "ALL THE viruses: ";
     this->viruses->print();
     cout << endl;
 }
 
-void travelMonitor::printCountryToMonitor() {
+void travelMonitorClient::printCountryToMonitor() {
     this->countryToMonitor->print();
 }
