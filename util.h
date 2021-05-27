@@ -5,7 +5,7 @@
 
 using namespace std;
 
-int checkArguments(int argc, char* argv[], int& numMonitors, int& bufferSize, int& sizeOfBloom, string& input_dir);
+int checkArguments(int argc, char* argv[], int& numMonitors, int& socketBufferSize, int& cyclicBufferSize, int& sizeOfBloom, string& input_dir, int& numThreads);
 void checkNew(void* ptr);
 string getInput(string prompt);
 void splitString(string** words, string input, int* length);

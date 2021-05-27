@@ -122,12 +122,14 @@ travelMonitor::travelMonitor() {
     sigaction(SIGCHLD, &handlerSIGCHLD, NULL);
 }
 
-void travelMonitor::start(int m, int b, int s, string dir) {
+void travelMonitor::start(int m, int b, int c, int s, string dir, int t) {
     this->numMonitors = m;
-    this->bufferSize = b;
+    this->socketBufferSize = b;
+    this->cyclicBufferSize = c;
     this->sizeOfBloom = s;
     this->input_dir = dir;
-    // cout << "numMonitors=" << this->numMonitors << ", bufferSize= " << this->bufferSize << ", sizeOfBloom= " << this->sizeOfBloom << ", input_dir= " << this->input_dir << endl;
+    this->numThreads = t;
+    // cout << "numMonitors=" << this->numMonitors << ", bufferSize= " << this->socketBufferSize << ", sizeOfBloom= " << this->sizeOfBloom << ", input_dir= " << this->input_dir << endl;
     this->countryToMonitor = NULL;
     this->monitors = NULL;
     this->viruses = new stringList();
@@ -214,7 +216,7 @@ void travelMonitor::sendCredential(int i) {
     // cout << "sendCredential i=" << i << ",writefd=" << fd << endl;
     if (write(fd, &i, sizeof(int)) == -1)
         cout << "Error in writting id with errno=" << errno << endl;
-    if (write(fd, &this->bufferSize, sizeof(int)) == -1)
+    if (write(fd, &this->socketBufferSize, sizeof(int)) == -1)
         cout << "Error in writting bufferSize with errno=" << errno << endl;
     if (write(fd, &this->sizeOfBloom, sizeof(int)) == -1)
         cout << "Error in writting sizeOfBloom with errno=" << errno << endl;
@@ -318,15 +320,15 @@ void travelMonitor::receiveBlooms(int i) {
         int pos = 0;
         int fd = this->monitors->getReadFifo(i);
         char* bloomArray = this->blooms->getBloom(this->viruses->search(virus))->getArray();
-        for (int i = 0;i <= this->sizeOfBloom / this->bufferSize;i++) {
-            char buff[this->bufferSize];
-            if (read(fd, &buff, this->bufferSize) == -1)
+        for (int i = 0;i <= this->sizeOfBloom / this->socketBufferSize;i++) {
+            char buff[this->socketBufferSize];
+            if (read(fd, &buff, this->socketBufferSize) == -1)
                 cout << "Error in reading bit with errno=" << errno << endl;
 
-            for (int i = 0; i < this->bufferSize;i++)
+            for (int i = 0; i < this->socketBufferSize;i++)
                 bloomArray[pos + i] = bloomArray[pos + i] | buff[i];
 
-            pos += this->bufferSize;
+            pos += this->socketBufferSize;
         }
         // cout << virus << " ";
         // this->blooms->getBloom(this->viruses->search(virus))->print();
@@ -630,14 +632,14 @@ void travelMonitor::sendStr(int monitor, string str) {
         if (errno != 4)
             cout << "Error in writting sizeOfStr with errno=" << errno << endl;
 
-    if (sizeOfStr > this->bufferSize) {
+    if (sizeOfStr > this->socketBufferSize) {
         int pos = 0;
-        for (int i = 0;i <= strlen(to_tranfer) / this->bufferSize;i++) {
-            if (write(fd, &to_tranfer[pos], this->bufferSize) == -1)
+        for (int i = 0;i <= strlen(to_tranfer) / this->socketBufferSize;i++) {
+            if (write(fd, &to_tranfer[pos], this->socketBufferSize) == -1)
                 if (errno != 4)
                     cout << "Error in writting to_tranfer with errno=" << errno << endl;
 
-            pos += this->bufferSize;
+            pos += this->socketBufferSize;
         }
     }
     else
@@ -655,13 +657,13 @@ string travelMonitor::receiveStr(int monitor) {
             cout << "Error in reading sizeOfStr with errno=" << errno << endl;
 
     string str = "";
-    if (sizeOfStr > this->bufferSize) {
-        for (int i = 0;i <= sizeOfStr / this->bufferSize;i++) {
-            char buff[this->bufferSize + 1];
-            if (read(fd, &buff[0], this->bufferSize) == -1)
+    if (sizeOfStr > this->socketBufferSize) {
+        for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
+            char buff[this->socketBufferSize + 1];
+            if (read(fd, &buff[0], this->socketBufferSize) == -1)
                 if (errno != 4)
                     cout << "Error in reading buff with errno=" << errno << endl;
-            buff[this->bufferSize] = '\0';
+            buff[this->socketBufferSize] = '\0';
             str.append(buff);
         }
     }
@@ -689,13 +691,13 @@ string travelMonitor::receiveManyStr(int monitor, int* end) {
     }
 
     string str = "";
-    if (sizeOfStr > this->bufferSize) {
-        for (int i = 0;i <= sizeOfStr / this->bufferSize;i++) {
-            char buff[this->bufferSize + 1];
-            if (read(fd, &buff[0], this->bufferSize) == -1)
+    if (sizeOfStr > this->socketBufferSize) {
+        for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
+            char buff[this->socketBufferSize + 1];
+            if (read(fd, &buff[0], this->socketBufferSize) == -1)
                 if (errno != 4)
                     cout << "Error in reading buff with errno=" << errno << endl;
-            buff[this->bufferSize] = '\0';
+            buff[this->socketBufferSize] = '\0';
             str.append(buff);
         }
     }

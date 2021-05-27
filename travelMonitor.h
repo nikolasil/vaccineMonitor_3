@@ -18,7 +18,7 @@ public:
     travelMonitor(int m, int b, int s, string dir);
     travelMonitor();
     // ~travelMonitor();
-    void start(int m, int b, int s, string dir);
+    void start(int m, int b, int c, int s, string dir, int t);
 
     void createFIFOs();
     void createMonitors();
@@ -70,9 +70,11 @@ private:
     struct sigaction handlerSIGCHLD;
     string* command;
     int numMonitors;
-    int bufferSize;
+    int socketBufferSize;
+    int cyclicBufferSize;
     int sizeOfBloom;
     string input_dir;
+    int numThreads;
 
     monitorList* monitors;
     monitorCountryPairList* countryToMonitor;

@@ -12,14 +12,16 @@ extern travelMonitor mainMonitor;
 int main(int argc, char* argv[])
 {
     int numMonitors;
-    int bufferSize;
+    int socketBufferSize;
+    int cyclicBufferSize;
     int sizeOfBloom;
     string input_dir;
-    if (!checkArguments(argc, argv, numMonitors, bufferSize, sizeOfBloom, input_dir))
+    int numThreads;
+    if (!checkArguments(argc, argv, numMonitors, socketBufferSize, cyclicBufferSize, sizeOfBloom, input_dir, numThreads))
         return 1;
 
     // travelMonitor mainMonitor = travelMonitor(numMonitors, bufferSize, sizeOfBloom, input_dir);
-    mainMonitor.start(numMonitors, bufferSize, sizeOfBloom, input_dir);
+    mainMonitor.start(numMonitors, socketBufferSize, cyclicBufferSize, sizeOfBloom, input_dir, numThreads);
     mainMonitor.createFIFOs();
     mainMonitor.createMonitors();
     mainMonitor.openFifos();
