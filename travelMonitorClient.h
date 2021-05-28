@@ -24,6 +24,7 @@ public:
     void start(int m, int b, int c, int s, string dir, int t);
 
     void findIP();
+    void roundRobinCountriesandPutToList();
     void createServers();
     void createServer(int i);
     void openFifos();

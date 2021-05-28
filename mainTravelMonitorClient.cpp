@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 
     // travelMonitorClient mainMonitor = travelMonitorClient(numMonitors, bufferSize, sizeOfBloom, input_dir);
     mainMonitor.start(numMonitors, socketBufferSize, cyclicBufferSize, sizeOfBloom, input_dir, numThreads);
-    mainMonitor.findIP();
+    mainMonitor.roundRobinCountriesandPutToList();
     mainMonitor.createServers();
     // mainMonitor.openFifos();
     // mainMonitor.sendCredentials();
@@ -32,5 +32,6 @@ int main(int argc, char* argv[])
     // while (1) {
     //     mainMonitor.startMenu();
     // }
+    sleep(2);
     // return 0;
 }

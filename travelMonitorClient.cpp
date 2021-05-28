@@ -67,6 +67,8 @@ void travelMonitorClient::start(int m, int b, int c, int s, string dir, int t) {
     this->monitors = NULL;
     this->viruses = new stringList();
     checkNew(this->viruses);
+    this->filePaths = new stringList();
+    checkNew(this->filePaths);
 
     this->blooms = new bloomFilterList(this->sizeOfBloom);
     checkNew(this->blooms);
@@ -99,55 +101,97 @@ void travelMonitorClient::createServer(int i) {
     else if (c_pid > 0) {
         cout << "Monitor " << i << " Created with pid " << c_pid << endl;
         this->addMonitor(c_pid, i);
+        // sleep(2);
     }
     else {
-        int fileCount = 0;
-        // loop in the list of monitorCountry
-        // abjust the count for every file.txt
-        // make new of that count to an array **
-        // make the loop again and add to the array the files
-        char** argArray = new
-            execv("./monitorServer", argArray);
+        int port = 1289 + i;
+        string files = "";
+        files.append("-p " + to_string(port));
+        files.append(" -t " + to_string(this->numThreads));
+        files.append(" -b " + to_string(this->socketBufferSize));
+        files.append(" -c " + to_string(this->cyclicBufferSize));
+        files.append(" -s " + to_string(this->sizeOfBloom));
+        monitorCountryPairList* temp = this->countryToMonitor;
+        while (temp != NULL) {
+            if (i == temp->getMonitor()) {
+                string in = this->input_dir;
+                in.append(temp->getCountry());
+                DIR* input;
+                struct dirent* dir;
+                char* in2 = &in[0];
+                input = opendir(in2);
+                if (input)
+                {
+                    while ((dir = readdir(input)) != NULL)
+                    {
+                        string FILE = dir->d_name;
+                        if (FILE.compare("..") == 0 || FILE.compare(".") == 0)
+                            continue;
+
+                        string fullpath = in;
+                        fullpath.append("/");
+                        fullpath.append(FILE);
+
+                        files.append(" " + fullpath);
+
+                    }
+                }
+            }
+            temp = temp->getNext();
+        }
+        int length;
+        string* argArray = readString(files, &length);
+        char* args[length + 1];
+        args[length] = NULL;
+        for (int i = 0;i < length;i++) {
+            char* word = new char[argArray[i].length() + 1];
+            word[argArray[i].length()] = '\0';
+            for (int j = 0;j < argArray[i].length();j++)
+                word[j] = (argArray[i].c_str())[j];
+            args[i] = word;
+        }
+        char* server = "./monitorServer";
+        execvp(server, args);
     }
 }
 
 
-void travelMonitorClient::openFifos() {
-    for (int i = 0;i < numMonitors;i++) {
-        openFifo(i);
-    }
-}
-void travelMonitorClient::openFifo(int i) {
+// void travelMonitorClient::openFifos() {
+//     for (int i = 0;i < numMonitors;i++) {
+//         openFifo(i);
+//     }
+// }
+// void travelMonitorClient::openFifo(int i) {
 
-    string pipe0 = "pipes/fifo_tW_mR_" + to_string(i);
-    string pipe1 = "pipes/fifo_tR_mW_" + to_string(i);
-    int fd0 = open(pipe0.c_str(), O_WRONLY);
-    int fd1 = open(pipe1.c_str(), O_RDONLY);
-    // cout << "i=" << i << ",writefd=" << fd0 << ",readfd=" << fd1 << endl;
-    this->addFdToMonitor(i, fd1, fd0);
+//     string pipe0 = "pipes/fifo_tW_mR_" + to_string(i);
+//     string pipe1 = "pipes/fifo_tR_mW_" + to_string(i);
+//     int fd0 = open(pipe0.c_str(), O_WRONLY);
+//     int fd1 = open(pipe1.c_str(), O_RDONLY);
+//     // cout << "i=" << i << ",writefd=" << fd0 << ",readfd=" << fd1 << endl;
+//     this->addFdToMonitor(i, fd1, fd0);
 
-}
+// }
 
-void travelMonitorClient::sendCredentials() {
-    for (int i = 0;i < numMonitors;i++) {
-        sendCredential(i);
-    }
-}
+// void travelMonitorClient::sendCredentials() {
+//     for (int i = 0;i < numMonitors;i++) {
+//         sendCredential(i);
+//     }
+// }
 
-void travelMonitorClient::sendCredential(int i) {
+// void travelMonitorClient::sendCredential(int i) {
 
-    int fd = this->monitors->getWriteFifo(i);
-    // cout << "sendCredential i=" << i << ",writefd=" << fd << endl;
-    if (write(fd, &i, sizeof(int)) == -1)
-        cout << "Error in writting id with errno=" << errno << endl;
-    if (write(fd, &this->socketBufferSize, sizeof(int)) == -1)
-        cout << "Error in writting bufferSize with errno=" << errno << endl;
-    if (write(fd, &this->sizeOfBloom, sizeof(int)) == -1)
-        cout << "Error in writting sizeOfBloom with errno=" << errno << endl;
+//     int fd = this->monitors->getWriteFifo(i);
+//     // cout << "sendCredential i=" << i << ",writefd=" << fd << endl;
+//     if (write(fd, &i, sizeof(int)) == -1)
+//         cout << "Error in writting id with errno=" << errno << endl;
+//     if (write(fd, &this->socketBufferSize, sizeof(int)) == -1)
+//         cout << "Error in writting bufferSize with errno=" << errno << endl;
+//     if (write(fd, &this->sizeOfBloom, sizeof(int)) == -1)
+//         cout << "Error in writting sizeOfBloom with errno=" << errno << endl;
 
-    sendStr(i, this->input_dir);
+//     sendStr(i, this->input_dir);
 
-}
+// }
 
 void travelMonitorClient::roundRobinCountriesandPutToList() {
     int monitor = 0;
@@ -478,7 +522,7 @@ void travelMonitorClient::addVaccinationRecords(string* arguments, int length) {
         cout << "- country: " << country << endl;
         if (this->countryToMonitor->search(country) != NULL) {
             // sendStr(this->countryToMonitor->search(country)->getMonitor(), "break");
-            this->sendSIGUSR1(this->countryToMonitor->search(country)->getMonitor());
+            // this->sendSIGUSR1(this->countryToMonitor->search(country)->getMonitor());
             mainMonitor.receiveBlooms(this->countryToMonitor->search(country)->getMonitor());
             mainMonitor.sendStr(this->countryToMonitor->search(country)->getMonitor(), "DONE");
         }

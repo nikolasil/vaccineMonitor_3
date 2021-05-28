@@ -162,7 +162,7 @@ void monitorServer::start(int p, int t, int sb, int cb, int bloom, char** paths)
     this->numThreads = t;
     this->socketBufferSize = sb;
     this->cyclicBufferSize = cb;
-    this->sizeOfBloom = bloom;
+    this->bloomSize = bloom;
 
     this->tree = NULL;
     this->countries = new stringList();
@@ -190,14 +190,14 @@ void monitorServer::receiveCredentials() {
     // cout << "monitorServer cred " << readFD << endl;
     if (read(readFD, &this->id, sizeof(int)) == -1)
         cout << "monitorServer error in reading id with errno=" << errno << endl;
-    if (read(readFD, &this->bufferSize, sizeof(int)) == -1)
+    if (read(readFD, &this->socketBufferSize, sizeof(int)) == -1)
         cout << "monitorServer " << this->id << " error in reading bufferSize with errno=" << errno << endl;
     if (read(readFD, &this->bloomSize, sizeof(int)) == -1)
         cout << "monitorServer " << this->id << " error in reading bloomSize with errno=" << errno << endl;
     this->blooms = new bloomFilterList(this->bloomSize);
     checkNew(this->blooms);
     this->generalDirectory = receiveStr();
-    cout << "monitorServer got" << this->id << ", bufferSize=" << this->bufferSize << ", bloomSize=" << this->bloomSize << ", generalDirectory=" << this->generalDirectory << endl;
+    cout << "monitorServer got" << this->id << ", bufferSize=" << this->socketBufferSize << ", bloomSize=" << this->bloomSize << ", generalDirectory=" << this->generalDirectory << endl;
 
 }
 
@@ -414,10 +414,10 @@ void monitorServer::sendBlooms() {
         int pos = 0;
         char* bloomArray = bloomV->getArray();
 
-        for (int i = 0;i <= this->bloomSize / this->bufferSize;i++) {
-            if (write(writeFD, &bloomArray[pos], bufferSize) == -1)
+        for (int i = 0;i <= this->bloomSize / this->socketBufferSize;i++) {
+            if (write(writeFD, &bloomArray[pos], this->socketBufferSize) == -1)
                 cout << "Error in writting i with errno=" << errno << endl;
-            pos += this->bufferSize;
+            pos += this->socketBufferSize;
         }
 
         temp = temp->getNext();
@@ -468,13 +468,13 @@ void monitorServer::sendStr(string str) {
         if (errno != 4)
             cout << "Error in writting sizeOfStr with errno=" << errno << endl;
 
-    if (sizeOfStr > this->bufferSize) {
+    if (sizeOfStr > this->socketBufferSize) {
         int pos = 0;
-        for (int i = 0;i <= strlen(to_tranfer) / this->bufferSize;i++) {
-            if (write(writeFD, &to_tranfer[pos], this->bufferSize) == -1)
+        for (int i = 0;i <= strlen(to_tranfer) / this->socketBufferSize;i++) {
+            if (write(writeFD, &to_tranfer[pos], this->socketBufferSize) == -1)
                 if (errno != 4)
                     cout << "Error in writting to_tranfer with errno=" << errno << endl;
-            pos += this->bufferSize;
+            pos += this->socketBufferSize;
         }
     }
     else
@@ -491,13 +491,13 @@ string monitorServer::receiveStr() {
             cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
 
     string str = "";
-    if (sizeOfStr > this->bufferSize) {
-        for (int i = 0;i <= sizeOfStr / this->bufferSize;i++) {
-            char buff[this->bufferSize + 1];
-            if (read(readFD, &buff[0], this->bufferSize) == -1)
+    if (sizeOfStr > this->socketBufferSize) {
+        for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
+            char buff[this->socketBufferSize + 1];
+            if (read(readFD, &buff[0], this->socketBufferSize) == -1)
                 if (errno != 4)
                     cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
-            buff[this->bufferSize] = '\0';
+            buff[this->socketBufferSize] = '\0';
             str.append(buff);
         }
     }
@@ -524,13 +524,13 @@ string monitorServer::receiveManyStr(int* end) {
     }
 
     string str = "";
-    if (sizeOfStr > this->bufferSize) {
-        for (int i = 0;i <= sizeOfStr / this->bufferSize;i++) {
-            char buff[this->bufferSize + 1];
-            if (read(readFD, &buff[0], this->bufferSize) == -1)
+    if (sizeOfStr > this->socketBufferSize) {
+        for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
+            char buff[this->socketBufferSize + 1];
+            if (read(readFD, &buff[0], this->socketBufferSize) == -1)
                 if (errno != 4)
                     cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
-            buff[this->bufferSize] = '\0';
+            buff[this->socketBufferSize] = '\0';
             str.append(buff);
         }
     }

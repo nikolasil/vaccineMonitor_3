@@ -136,127 +136,127 @@ int checkArguments(int argc, char* argv[], int& numMonitors, int& socketBufferSi
     return 1;
 }
 
-int checkArgumentsServer(int argc, char* argv[], int& port, int& numThreads, int& socketBufferSize, int& cyclicBufferSize, int& sizeOfBloom, char** paths)
-{
-    struct stat buffer;
-    string args[5] = { "-p", "-t", "-b", "-c", "-s" };
-    int pos = 1;
-    while (1) {
-        if (pos > argc)
-            break;
-        int i = 0;
-        for (i = 0; i < 6; i++) {
-            // cout << "pos=" << pos << ",i=" << i << ",arg=" << string(argv[pos]) << ",array=" << args[i] << endl;
-            if (string(argv[pos]).compare(args[i]) == 0) {
-                args[i] = ""; // clear it for future checking
-                if (string(argv[pos]) == "-m") {
-                    // cout << "-m" << endl;
+// int checkArgumentsServer(int argc, char* argv[], int& port, int& numThreads, int& socketBufferSize, int& cyclicBufferSize, int& sizeOfBloom, char** paths)
+// {
+//     struct stat buffer;
+//     string args[5] = { "-p", "-t", "-b", "-c", "-s" };
+//     int pos = 1;
+//     while (1) {
+//         if (pos > argc)
+//             break;
+//         int i = 0;
+//         for (i = 0; i < 6; i++) {
+//             // cout << "pos=" << pos << ",i=" << i << ",arg=" << string(argv[pos]) << ",array=" << args[i] << endl;
+//             if (string(argv[pos]).compare(args[i]) == 0) {
+//                 args[i] = ""; // clear it for future checking
+//                 if (string(argv[pos]) == "-m") {
+//                     // cout << "-m" << endl;
 
-                    string c = string(argv[pos + 1]);
-                    std::string::const_iterator it = c.begin();
-                    while (it != c.end() && isdigit(*it))
-                        ++it;
+//                     string c = string(argv[pos + 1]);
+//                     std::string::const_iterator it = c.begin();
+//                     while (it != c.end() && isdigit(*it))
+//                         ++it;
 
-                    bool check = !c.empty() && it == c.end();
+//                     bool check = !c.empty() && it == c.end();
 
-                    if (atoi(argv[pos + 1]) <= 0 || !check)
-                    {
-                        cout << "ERROR The numMonitors must be unsigned integer" << endl;
-                        return 0;
-                    }
-                    numMonitors = atoi(argv[pos + 1]);
-                }
-                else if (string(argv[pos]) == "-b") {
-                    // cout << "-b" << endl;
+//                     if (atoi(argv[pos + 1]) <= 0 || !check)
+//                     {
+//                         cout << "ERROR The numMonitors must be unsigned integer" << endl;
+//                         return 0;
+//                     }
+//                     numMonitors = atoi(argv[pos + 1]);
+//                 }
+//                 else if (string(argv[pos]) == "-b") {
+//                     // cout << "-b" << endl;
 
-                    string c = string(argv[pos + 1]);
-                    std::string::const_iterator it = c.begin();
-                    while (it != c.end() && isdigit(*it))
-                        ++it;
+//                     string c = string(argv[pos + 1]);
+//                     std::string::const_iterator it = c.begin();
+//                     while (it != c.end() && isdigit(*it))
+//                         ++it;
 
-                    bool check = !c.empty() && it == c.end();
+//                     bool check = !c.empty() && it == c.end();
 
-                    if (atoi(argv[pos + 1]) <= 0 || !check)
-                    {
-                        cout << "ERROR The bufferSize must be unsigned integer" << endl;
-                        return 0;
-                    }
-                    socketBufferSize = atoi(argv[pos + 1]);
-                }
-                else if (string(argv[pos]) == "-c") {
-                    // cout << "-b" << endl;
+//                     if (atoi(argv[pos + 1]) <= 0 || !check)
+//                     {
+//                         cout << "ERROR The bufferSize must be unsigned integer" << endl;
+//                         return 0;
+//                     }
+//                     socketBufferSize = atoi(argv[pos + 1]);
+//                 }
+//                 else if (string(argv[pos]) == "-c") {
+//                     // cout << "-b" << endl;
 
-                    string c = string(argv[pos + 1]);
-                    std::string::const_iterator it = c.begin();
-                    while (it != c.end() && isdigit(*it))
-                        ++it;
+//                     string c = string(argv[pos + 1]);
+//                     std::string::const_iterator it = c.begin();
+//                     while (it != c.end() && isdigit(*it))
+//                         ++it;
 
-                    bool check = !c.empty() && it == c.end();
+//                     bool check = !c.empty() && it == c.end();
 
-                    if (atoi(argv[pos + 1]) <= 0 || !check)
-                    {
-                        cout << "ERROR The bufferSize must be unsigned integer" << endl;
-                        return 0;
-                    }
-                    cyclicBufferSize = atoi(argv[pos + 1]);
-                }
-                else if (string(argv[pos]) == "-s") {
-                    // cout << "-s" << endl;
+//                     if (atoi(argv[pos + 1]) <= 0 || !check)
+//                     {
+//                         cout << "ERROR The bufferSize must be unsigned integer" << endl;
+//                         return 0;
+//                     }
+//                     cyclicBufferSize = atoi(argv[pos + 1]);
+//                 }
+//                 else if (string(argv[pos]) == "-s") {
+//                     // cout << "-s" << endl;
 
-                    string c = string(argv[pos + 1]);
-                    std::string::const_iterator it = c.begin();
-                    while (it != c.end() && isdigit(*it))
-                        ++it;
+//                     string c = string(argv[pos + 1]);
+//                     std::string::const_iterator it = c.begin();
+//                     while (it != c.end() && isdigit(*it))
+//                         ++it;
 
-                    bool check = !c.empty() && it == c.end();
+//                     bool check = !c.empty() && it == c.end();
 
-                    if (atoi(argv[pos + 1]) <= 0 || !check)
-                    {
-                        cout << "ERROR The sizeOfBloom must be unsigned integer" << endl;
-                        return 0;
-                    }
-                    sizeOfBloom = atoi(argv[pos + 1]);
-                }
-                else if (string(argv[pos]) == "-i") {
-                    // cout << "-i" << endl;
-                    if (stat(argv[pos + 1], &buffer) != 0)
-                    {
-                        cout << "ERROR The input_dir=" << argv[pos + 1] << " don't exists" << endl;
-                        return 0;
-                    }
-                    input_dir = string(argv[pos + 1]);
-                }
-                else if (string(argv[pos]) == "-t") {
-                    // cout << "-m" << endl;
+//                     if (atoi(argv[pos + 1]) <= 0 || !check)
+//                     {
+//                         cout << "ERROR The sizeOfBloom must be unsigned integer" << endl;
+//                         return 0;
+//                     }
+//                     sizeOfBloom = atoi(argv[pos + 1]);
+//                 }
+//                 else if (string(argv[pos]) == "-i") {
+//                     // cout << "-i" << endl;
+//                     if (stat(argv[pos + 1], &buffer) != 0)
+//                     {
+//                         cout << "ERROR The input_dir=" << argv[pos + 1] << " don't exists" << endl;
+//                         return 0;
+//                     }
+//                     input_dir = string(argv[pos + 1]);
+//                 }
+//                 else if (string(argv[pos]) == "-t") {
+//                     // cout << "-m" << endl;
 
-                    string c = string(argv[pos + 1]);
-                    std::string::const_iterator it = c.begin();
-                    while (it != c.end() && isdigit(*it))
-                        ++it;
+//                     string c = string(argv[pos + 1]);
+//                     std::string::const_iterator it = c.begin();
+//                     while (it != c.end() && isdigit(*it))
+//                         ++it;
 
-                    bool check = !c.empty() && it == c.end();
+//                     bool check = !c.empty() && it == c.end();
 
-                    if (atoi(argv[pos + 1]) <= 0 || !check)
-                    {
-                        cout << "ERROR The numMonitors must be unsigned integer" << endl;
-                        return 0;
-                    }
-                    numThreads = atoi(argv[pos + 1]);
-                }
-                else {
-                    cout << "Error in arguments" << endl;
-                }
-                pos += 2;
-                break;
-            }
-        }
-        if (i == 6) {
-            cout << "Error Arguments must start with -m,-b,-c,-s,-i & -t" << endl;
-            break;
-        }
-    }
-    return 1;
-}
+//                     if (atoi(argv[pos + 1]) <= 0 || !check)
+//                     {
+//                         cout << "ERROR The numMonitors must be unsigned integer" << endl;
+//                         return 0;
+//                     }
+//                     numThreads = atoi(argv[pos + 1]);
+//                 }
+//                 else {
+//                     cout << "Error in arguments" << endl;
+//                 }
+//                 pos += 2;
+//                 break;
+//             }
+//         }
+//         if (i == 6) {
+//             cout << "Error Arguments must start with -m,-b,-c,-s,-i & -t" << endl;
+//             break;
+//         }
+//     }
+//     return 1;
+// }
 
 void checkNew(void* ptr)
 {
