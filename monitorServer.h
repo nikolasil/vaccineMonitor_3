@@ -16,11 +16,9 @@ class monitorServer {
 public:
     monitorServer();
     ~monitorServer();
-    void start(int p, int t, int sb, int cb, int bloom, char** paths);
+    void start(int p, int t, int sb, int cb, int bloom, char** paths, int numPaths);
+    void openPathsByThreads();
 
-    void receiveCredentials();
-    void receiveCountries();
-    void readFilesAndCreateStructures();
     void sendBlooms();
     void receiveDone();
 
@@ -55,10 +53,9 @@ private:
     int t;
     int f;
     string generalDirectory;
-    string readFifo;
-    string writeFifo;
-    int readFD;
-    int writeFD;
+
+    char** argPaths;
+    int argNumPaths;
 
     int socketBufferSize;
     int cyclicBufferSize;

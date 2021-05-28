@@ -101,7 +101,7 @@ void travelMonitorClient::createServer(int i) {
     else if (c_pid > 0) {
         cout << "Monitor " << i << " Created with pid " << c_pid << endl;
         this->addMonitor(c_pid, i);
-        // sleep(2);
+        sleep(2);
     }
     else {
         int port = 1289 + i;

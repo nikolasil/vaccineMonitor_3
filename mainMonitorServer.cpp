@@ -16,10 +16,8 @@ int main(int argc, char* argv[])
     for (int i = 0;i < numPaths;i++) {
         paths[i] = argv[10 + i];
     }
-    monitor.start(stoi(argv[1]), stoi(argv[3]), stoi(argv[5]), stoi(argv[7]), stoi(argv[9]), paths);
-    // monitor.receiveCredentials();
-    // monitor.receiveCountries();
-    // monitor.readFilesAndCreateStructures();
+    monitor.start(stoi(argv[1]), stoi(argv[3]), stoi(argv[5]), stoi(argv[7]), stoi(argv[9]), paths, numPaths);
+    monitor.openPathsByThreads();
     // monitor.printAllCountries();
     // monitor.sendBlooms();
     // while (1) {
