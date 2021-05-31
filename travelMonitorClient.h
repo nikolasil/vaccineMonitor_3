@@ -23,10 +23,11 @@ public:
     // ~travelMonitorClient();
     void start(int m, int b, int c, int s, string dir, int t);
 
-    void findIP();
+    void openSockets();
     void roundRobinCountriesandPutToList();
     void createServers();
     void createServer(int i);
+    void sendIds();
     void openFifos();
     void openFifo(int i);
     void sendCredentials();
@@ -56,7 +57,7 @@ public:
 
     void addCountryToMonitor(string c, int m);
     void addMonitor(int pid, int id);
-    void addFdToMonitor(int m, int r, int w);
+    void addFdToMonitor(int m, int s);
 
     void addRequest(string c, string v, date dt, bool s);
     void addNewVirus(string virusName);
@@ -72,6 +73,10 @@ public:
 private:
     struct hostent* ip;
     struct in_addr** ip_addr;
+
+    struct sockaddr_in client;
+    struct sockaddr* clientptr;
+
     char machineName[256];
     char externalAddress[256];
 

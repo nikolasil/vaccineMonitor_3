@@ -20,10 +20,11 @@ int main(int argc, char* argv[])
     if (!checkArguments(argc, argv, numMonitors, socketBufferSize, cyclicBufferSize, sizeOfBloom, input_dir, numThreads))
         return 1;
 
-    // travelMonitorClient mainMonitor = travelMonitorClient(numMonitors, bufferSize, sizeOfBloom, input_dir);
     mainMonitor.start(numMonitors, socketBufferSize, cyclicBufferSize, sizeOfBloom, input_dir, numThreads);
     mainMonitor.roundRobinCountriesandPutToList();
     mainMonitor.createServers();
+    mainMonitor.openSockets();
+    mainMonitor.sendIds();
     // mainMonitor.openFifos();
     // mainMonitor.sendCredentials();
     // mainMonitor.sendCountries();
@@ -32,6 +33,7 @@ int main(int argc, char* argv[])
     // while (1) {
     //     mainMonitor.startMenu();
     // }
-    sleep(2);
+    sleep(5);
+    cout << "t end" << endl;
     // return 0;
 }

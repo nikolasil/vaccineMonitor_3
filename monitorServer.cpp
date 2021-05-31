@@ -9,7 +9,11 @@
 #include <string>
 #include <cstring>
 #include <fstream>
-#include <signal.h>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 #include "monitorServer.h"
 #include "DataStructures/stringList/stringList.h"
@@ -22,6 +26,8 @@
 using namespace std;
 
 monitorServer monitor = monitorServer();
+
+monitorServer::~monitorServer() {}
 
 // void monitorServer::suicide() {
 //     if (this->tree != NULL)
@@ -186,17 +192,80 @@ void monitorServer::start(int p, int t, int sb, int cb, int bloom, char** paths,
     this->f = 0;
 }
 
-monitorServer::~monitorServer() {}
+void monitorServer::initializeServer() {
+    if (gethostname(this->machineName, sizeof(this->machineName)) == -1) {
+        perror("gethostname");
+        exit(1);
+    }
+    if ((this->ip = gethostbyname(this->machineName)) == NULL) {
+        perror("gethostbyname");
+        exit(1);
+    }
+    this->ip_addr = (struct in_addr**)this->ip->h_addr_list;
+    strcpy(this->externalAddress, inet_ntoa(*(this->ip_addr[0])));
+    cout << "Monitor machineName " << this->machineName << endl;
+    cout << "Monitor externalAddress " << this->externalAddress << endl;
+    int listen_sock;
+    if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("travelMonitorClient error opening socket");
+        exit(-1);
+    }
+
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    server.sin_port = htons(this->port);
+
+    this->serverptr = (struct sockaddr*)&(this->server);
+    unsigned int serverlen = sizeof(this->server);
+
+    if (bind(listen_sock, this->serverptr, serverlen) < 0) {
+        perror(" bind ");
+        exit(-1);
+    }
+    cout << "binded" << endl;
+    if (listen(listen_sock, 1) < 0) {
+        perror(" listen ");
+        exit(-1);
+    }
+    cout << "listening" << endl;
+    if ((this->sock = accept(listen_sock, serverptr, &serverlen)) < 0) {
+        perror("accept");
+        exit(-1);
+    }
+    cout << "accepted" << endl;
+}
 
 void monitorServer::openPathsByThreads() {
     for (int i = 0; i < this->argNumPaths; i++) {
         string pathString(this->argPaths[i]);
-        int already = this->addNewFile(pathString);
-        if (already) {
-            cout << "File: " << pathString << endl;
-            this->addFromFile(pathString);
+        // cout << "File: " << pathString << endl;
+        DIR* input;
+        struct dirent* dir;
+        char* in2 = &pathString[0];
+        input = opendir(in2);
+        if (input)
+        {
+            while ((dir = readdir(input)) != NULL)
+            {
+                string FILE = dir->d_name;
+                if (FILE.compare("..") == 0 || FILE.compare(".") == 0)
+                    continue;
+                if (this->addNewFile(pathString + "/" + FILE)) {
+                    // cout << "TXT : " << pathString + "/" + FILE << endl;
+                    this->addFromFile(pathString + "/" + FILE);
+                }
+            }
         }
     }
+}
+
+void monitorServer::receiveId() {
+    int send;
+    if (read(this->sock, &send, sizeof(int)) == -1)
+        cout << "Error in writting sizeOfStr with errno=" << errno << endl;
+    this->id = send;
+    cout << "Monitor " << this->id << endl;
+    cout << receiveStr() << endl;
 }
 
 void monitorServer::addFromFile(string filepath)
@@ -412,98 +481,98 @@ int monitorServer::addNewFile(string file)
     return 0;
 }
 
-// void monitorServer::sendStr(string str) {
-//     char* to_tranfer = &str[0];
-//     int sizeOfStr = strlen(to_tranfer);
+void monitorServer::sendStr(string str) {
+    char* to_tranfer = &str[0];
+    int sizeOfStr = strlen(to_tranfer);
 
-//     if (write(writeFD, &sizeOfStr, sizeof(int)) == -1)
-//         if (errno != 4)
-//             cout << "Error in writting sizeOfStr with errno=" << errno << endl;
+    if (write(this->sock, &sizeOfStr, sizeof(int)) == -1)
+        if (errno != 4)
+            cout << "Error in writting sizeOfStr with errno=" << errno << endl;
 
-//     if (sizeOfStr > this->socketBufferSize) {
-//         int pos = 0;
-//         for (int i = 0;i <= strlen(to_tranfer) / this->socketBufferSize;i++) {
-//             if (write(writeFD, &to_tranfer[pos], this->socketBufferSize) == -1)
-//                 if (errno != 4)
-//                     cout << "Error in writting to_tranfer with errno=" << errno << endl;
-//             pos += this->socketBufferSize;
-//         }
-//     }
-//     else
-//         if (write(writeFD, &to_tranfer[0], sizeOfStr) == -1)
-//             if (errno != 4)
-//                 cout << "Error in writting to_tranfer with errno=" << errno << endl;
+    if (sizeOfStr > this->socketBufferSize) {
+        int pos = 0;
+        for (int i = 0;i <= strlen(to_tranfer) / this->socketBufferSize;i++) {
+            if (write(this->sock, &to_tranfer[pos], this->socketBufferSize) == -1)
+                if (errno != 4)
+                    cout << "Error in writting to_tranfer with errno=" << errno << endl;
+            pos += this->socketBufferSize;
+        }
+    }
+    else
+        if (write(this->sock, &to_tranfer[0], sizeOfStr) == -1)
+            if (errno != 4)
+                cout << "Error in writting to_tranfer with errno=" << errno << endl;
 
-// }
+}
 
-// string monitorServer::receiveStr() {
-//     int sizeOfStr;
-//     if (read(readFD, &sizeOfStr, sizeof(int)) == -1)
-//         if (errno != 4)
-//             cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
+string monitorServer::receiveStr() {
+    int sizeOfStr;
+    if (read(this->sock, &sizeOfStr, sizeof(int)) == -1)
+        if (errno != 4)
+            cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
 
-//     string str = "";
-//     if (sizeOfStr > this->socketBufferSize) {
-//         for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
-//             char buff[this->socketBufferSize + 1];
-//             if (read(readFD, &buff[0], this->socketBufferSize) == -1)
-//                 if (errno != 4)
-//                     cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
-//             buff[this->socketBufferSize] = '\0';
-//             str.append(buff);
-//         }
-//     }
-//     else {
-//         char buff[sizeOfStr + 1];
-//         if (read(readFD, &buff[0], sizeOfStr) == -1)
-//             if (errno != 4)
-//                 cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
-//         buff[sizeOfStr] = '\0';
-//         str.append(buff);
-//     }
-//     return str;
-// }
+    string str = "";
+    if (sizeOfStr > this->socketBufferSize) {
+        for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
+            char buff[this->socketBufferSize + 1];
+            if (read(this->sock, &buff[0], this->socketBufferSize) == -1)
+                if (errno != 4)
+                    cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
+            buff[this->socketBufferSize] = '\0';
+            str.append(buff);
+        }
+    }
+    else {
+        char buff[sizeOfStr + 1];
+        if (read(this->sock, &buff[0], sizeOfStr) == -1)
+            if (errno != 4)
+                cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
+        buff[sizeOfStr] = '\0';
+        str.append(buff);
+    }
+    return str;
+}
 
-// string monitorServer::receiveManyStr(int* end) {
-//     int sizeOfStr;
-//     if (read(readFD, &sizeOfStr, sizeof(int)) == -1)
-//         if (errno != 4)
-//             cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
+string monitorServer::receiveManyStr(int* end) {
+    int sizeOfStr;
+    if (read(this->sock, &sizeOfStr, sizeof(int)) == -1)
+        if (errno != 4)
+            cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
 
-//     if (sizeOfStr == -1) {
-//         *end = -1;
-//         return "";
-//     }
+    if (sizeOfStr == -1) {
+        *end = -1;
+        return "";
+    }
 
-//     string str = "";
-//     if (sizeOfStr > this->socketBufferSize) {
-//         for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
-//             char buff[this->socketBufferSize + 1];
-//             if (read(readFD, &buff[0], this->socketBufferSize) == -1)
-//                 if (errno != 4)
-//                     cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
-//             buff[this->socketBufferSize] = '\0';
-//             str.append(buff);
-//         }
-//     }
-//     else {
-//         char buff[sizeOfStr + 1];
-//         if (read(readFD, &buff[0], sizeOfStr) == -1)
-//             if (errno != 4)
-//                 cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
-//         buff[sizeOfStr] = '\0';
-//         // cout << "test " << buff << endl;
-//         str.append(buff);
-//     }
-//     return str;
-// }
+    string str = "";
+    if (sizeOfStr > this->socketBufferSize) {
+        for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
+            char buff[this->socketBufferSize + 1];
+            if (read(this->sock, &buff[0], this->socketBufferSize) == -1)
+                if (errno != 4)
+                    cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
+            buff[this->socketBufferSize] = '\0';
+            str.append(buff);
+        }
+    }
+    else {
+        char buff[sizeOfStr + 1];
+        if (read(this->sock, &buff[0], sizeOfStr) == -1)
+            if (errno != 4)
+                cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
+        buff[sizeOfStr] = '\0';
+        // cout << "test " << buff << endl;
+        str.append(buff);
+    }
+    return str;
+}
 
-// void monitorServer::printAllCountries() {
-//     cout << "monitorServer " << this->id << " has the countries:";
-//     this->countries->print();
-// }
+void monitorServer::printAllCountries() {
+    cout << "monitorServer " << this->id << " has the countries:";
+    this->countries->print();
+}
 
-// void monitorServer::printAllViruses() {
-//     cout << "monitorServer " << this->id << " has the viruses:";
-//     this->viruses->print();
-// }
+void monitorServer::printAllViruses() {
+    cout << "monitorServer " << this->id << " has the viruses:";
+    this->viruses->print();
+}

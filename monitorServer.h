@@ -3,7 +3,10 @@
 
 #include <iostream>
 #include <string>
-#include <signal.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 #include "DataStructures/bloomFilter/bloomFilter.h"
 #include "DataStructures/binaryAvlTree/tree.h"
@@ -17,7 +20,10 @@ public:
     monitorServer();
     ~monitorServer();
     void start(int p, int t, int sb, int cb, int bloom, char** paths, int numPaths);
+    void initializeServer();
+
     void openPathsByThreads();
+    void receiveId();
 
     void sendBlooms();
     void receiveDone();
@@ -46,8 +52,18 @@ public:
 
     void waitForCommands();
 private:
+    struct hostent* ip;
+    struct in_addr** ip_addr;
+
+    struct sockaddr_in server;
+    struct sockaddr* serverptr;
+
+    char machineName[256];
+    char externalAddress[256];
+
     int id;
     int port;
+    int sock;
     int numThreads;
     string* command;
     int t;

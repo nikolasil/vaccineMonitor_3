@@ -36,32 +36,23 @@ monitorList* monitorList::add(int pid, int id)
     return new_node;
 }
 
-monitorList* monitorList::addFD(int m, int r, int w)
+monitorList* monitorList::addFD(int m, int s)
 {
     monitorList* temp = this;
     for (int i = 0;i < m;i++)
         temp = temp->getNext();
     // cout << "old fd " << temp->getReadFD() << " " << temp->getWriteFD() << endl;
-    temp->setReadFD(r);
-    temp->setWriteFD(w);
+    temp->setSocketFD(s);
     // cout << "new fd " << temp->getReadFD() << " " << temp->getWriteFD() << endl;
     return temp;
 }
 
-int monitorList::getReadFifo(int m) {
+int monitorList::getSocketFD(int m) {
     monitorList* temp = this;
     for (int i = 0;i < m;i++)
         temp = temp->getNext();
 
-    return temp->getReadFD();
-}
-
-int monitorList::getWriteFifo(int m) {
-    monitorList* temp = this;
-    for (int i = 0;i < m;i++)
-        temp = temp->getNext();
-
-    return temp->getWriteFD();
+    return temp->getSocketFD();
 }
 
 int monitorList::getPID(int m) {
