@@ -6,16 +6,16 @@
 
 
 stringList::stringList() : data("") {
-    this->next == NULL;
+    this->next == nullptr;
 }
 
 stringList::stringList(string d) : data(d) {
-    this->next == NULL;
+    this->next == nullptr;
 }
 
 stringList::~stringList()
 {
-    if (this->getNext() != NULL)
+    if (this->getNext() != nullptr)
         delete this->getNext();
 }
 
@@ -35,9 +35,9 @@ stringList* stringList::add(string d)
 stringList* stringList::remove(string d)
 {
     stringList* temp = this;
-    stringList* prev = NULL;
+    stringList* prev = nullptr;
 
-    if (temp != NULL && temp->getString() == d)
+    if (temp != nullptr && temp->getString() == d)
     {
         stringList* temp2 = temp->getNext();
         delete temp;
@@ -45,12 +45,12 @@ stringList* stringList::remove(string d)
     }
     else
     {
-        while (temp != NULL && temp->getString() != d)
+        while (temp != nullptr && temp->getString() != d)
         {
             prev = temp;
             temp = temp->getNext();
         }
-        if (temp == NULL)
+        if (temp == nullptr)
             return this;
 
         prev->setNext(temp->getNext());
@@ -62,7 +62,7 @@ stringList* stringList::remove(string d)
 stringList* stringList::search(string d)
 {
     stringList* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         if (temp->getString().compare(d) == 0)
             return temp;
@@ -80,7 +80,7 @@ void stringList::printData()
 void stringList::print()
 {
     stringList* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         temp->printData();
         cout << " ";

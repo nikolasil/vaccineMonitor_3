@@ -21,7 +21,7 @@ bloomFilter::bloomFilter(int bloomSize)
 
 bloomFilter::~bloomFilter()
 {
-    if (this->array != NULL)
+    if (this->array != nullptr)
         delete this->array;
 }
 
@@ -121,31 +121,31 @@ void bloomFilter::print() {
 
 bloomFilterList::bloomFilterList(int bloomSize) : bloomSize(bloomSize)
 {
-    this->next = NULL;
-    this->bloom = NULL;
-    this->virus = NULL;
+    this->next = nullptr;
+    this->bloom = nullptr;
+    this->virus = nullptr;
 }
 
 bloomFilterList::bloomFilterList(stringList* virus, int bloomSize) : bloomSize(bloomSize), virus(virus)
 {
     this->bloom = new bloomFilter(this->bloomSize);
     checkNew(this->bloom);
-    this->next = NULL;
+    this->next = nullptr;
 }
 
 bloomFilterList::~bloomFilterList()
 {
-    if (this->bloom != NULL)
+    if (this->bloom != nullptr)
         delete this->bloom;
 
-    if (this->next != NULL)
+    if (this->next != nullptr)
         delete this->next;
 
 }
 
 bloomFilterList* bloomFilterList::add(stringList* virus)
 {
-    if (this->virus == NULL)
+    if (this->virus == nullptr)
     {
         this->virus = virus;
         this->bloom = new bloomFilter(this->bloomSize);
@@ -161,12 +161,12 @@ bloomFilterList* bloomFilterList::add(stringList* virus)
 bloomFilter* bloomFilterList::getBloom(stringList* virus)
 {
     bloomFilterList* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         if (temp->virus->getString().compare(virus->getString()) == 0)
             return temp->bloom;
 
         temp = temp->next;
     }
-    return NULL;
+    return nullptr;
 }

@@ -15,19 +15,19 @@ listStatus::listStatus(stringList* virus, char s, string d) : dateVaccinated(d)
 {
     this->virusName = virus;
     this->status = s;
-    this->next = NULL;
+    this->next = nullptr;
 }
 
 listStatus::listStatus(stringList* virus, char s, date d) : dateVaccinated(d)
 {
     this->virusName = virus;
     this->status = s;
-    this->next = NULL;
+    this->next = nullptr;
 }
 
 listStatus::~listStatus()
 {
-    if (this->next != NULL)
+    if (this->next != nullptr)
         delete this->next;
 }
 
@@ -52,13 +52,13 @@ void listStatus::print()
         }
         cout << "]";
         temp = temp->next;
-    } while (temp != NULL);
+    } while (temp != nullptr);
 }
 
 void listStatus::addStatus(stringList* virus, char s, date d)
 {
     listStatus* temp = this;
-    if (temp == NULL)
+    if (temp == nullptr)
     {
         this->virusName = virus;
         this->status = s;
@@ -66,7 +66,7 @@ void listStatus::addStatus(stringList* virus, char s, date d)
         return;
     }
 
-    while (temp->next != NULL)
+    while (temp->next != nullptr)
         temp = temp->next;
 
     listStatus* new_node = new listStatus(virus, s, d);
@@ -83,8 +83,8 @@ listStatus* listStatus::getNode(stringList* virus)
             return temp;
 
         temp = temp->next;
-    } while (temp != NULL);
-    return NULL;
+    } while (temp != nullptr);
+    return nullptr;
 }
 
 listStatus* listStatus::getNode(string virus)
@@ -96,8 +96,8 @@ listStatus* listStatus::getNode(string virus)
             return temp;
 
         temp = temp->next;
-    } while (temp != NULL);
-    return NULL;
+    } while (temp != nullptr);
+    return nullptr;
 }
 
 char listStatus::getVirusStatus(stringList* virus)
@@ -109,7 +109,7 @@ char listStatus::getVirusStatus(stringList* virus)
             return temp->status;
 
         temp = temp->next;
-    } while (temp != NULL);
+    } while (temp != nullptr);
     return '\0';
 }
 
@@ -122,7 +122,7 @@ char listStatus::getVirusStatus(string virus)
             return temp->status;
 
         temp = temp->next;
-    } while (temp != NULL);
+    } while (temp != nullptr);
     return '\0';
 }
 
@@ -135,7 +135,7 @@ date listStatus::getVirusDate(stringList* virus)
             return temp->dateVaccinated;
 
         temp = temp->next;
-    } while (temp != NULL);
+    } while (temp != nullptr);
     date nullDate("", "", "");
     return nullDate;
 }
@@ -149,7 +149,7 @@ date listStatus::getVirusDate(string virus)
             return temp->dateVaccinated;
 
         temp = temp->next;
-    } while (temp != NULL);
+    } while (temp != nullptr);
     date nullDate("", "", "");
     return nullDate;
 }

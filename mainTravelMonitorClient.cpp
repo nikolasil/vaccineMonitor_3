@@ -33,7 +33,6 @@ int main(int argc, char* argv[])
     // while (1) {
     //     mainMonitor.startMenu();
     // }
-    sleep(5);
     cout << "t end" << endl;
     // return 0;
 }

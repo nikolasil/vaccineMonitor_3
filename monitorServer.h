@@ -8,12 +8,18 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <cstdlib>
+#include <pthread.h>
+
+#include "cyclicBuffer.h"
 #include "DataStructures/bloomFilter/bloomFilter.h"
 #include "DataStructures/binaryAvlTree/tree.h"
 #include "DataStructures/skipList/skipList.h"
 #include "DataStructures/stringList/stringList.h"
 
 using namespace std;
+
+void* threadFunc(void* args);
 
 class monitorServer {
 public:
@@ -24,6 +30,7 @@ public:
 
     void openPathsByThreads();
     void receiveId();
+    void openThreads();
 
     void sendBlooms();
     void receiveDone();
@@ -61,6 +68,8 @@ private:
     char machineName[256];
     char externalAddress[256];
 
+    pthread_mutex_t mutex;
+    cyclicBuffer* buff;
     int id;
     int port;
     int sock;

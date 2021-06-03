@@ -27,19 +27,19 @@ using namespace std;
 travelMonitorClient mainMonitor = travelMonitorClient();
 
 void travelMonitorClient::suicide() {
-    if (this->monitors != NULL)
+    if (this->monitors != nullptr)
         delete this->monitors;
-    if (this->countryToMonitor != NULL)
+    if (this->countryToMonitor != nullptr)
         delete this->countryToMonitor;
-    if (this->requests != NULL)
+    if (this->requests != nullptr)
         delete this->requests;
-    if (this->blooms != NULL)
+    if (this->blooms != nullptr)
         delete this->blooms;
-    if (this->viruses != NULL)
+    if (this->viruses != nullptr)
         delete this->viruses;
-    if (this->countries != NULL)
+    if (this->countries != nullptr)
         delete this->countries;
-    if (this->command != NULL)
+    if (this->command != nullptr)
         delete[] this->command;
 
     cout << "Travel Monitor Terminated" << endl;
@@ -63,8 +63,8 @@ void travelMonitorClient::start(int m, int b, int c, int s, string dir, int t) {
     this->input_dir = dir;
     this->numThreads = t;
 
-    this->countryToMonitor = NULL;
-    this->monitors = NULL;
+    this->countryToMonitor = nullptr;
+    this->monitors = nullptr;
     this->viruses = new stringList();
     checkNew(this->viruses);
     this->filePaths = new stringList();
@@ -79,7 +79,7 @@ void travelMonitorClient::roundRobinCountriesandPutToList() {
     int count;
 
     struct dirent** coutriesDir;
-    count = scandir(this->input_dir.c_str(), &coutriesDir, NULL, alphasort);
+    count = scandir(this->input_dir.c_str(), &coutriesDir, nullptr, alphasort);
     if (count < 0)
         perror("error in scandir");
     else {
@@ -114,7 +114,7 @@ void travelMonitorClient::createServer(int i) {
     else if (c_pid > 0) {
         cout << "Monitor " << i << " Created with pid " << c_pid << endl;
         this->addMonitor(c_pid, i);
-        sleep(2);
+        // sleep(2);
     }
     else {
         int port = 7777 + i;
@@ -125,7 +125,7 @@ void travelMonitorClient::createServer(int i) {
         files.append(" -c " + to_string(this->cyclicBufferSize));
         files.append(" -s " + to_string(this->sizeOfBloom));
         monitorCountryPairList* temp = this->countryToMonitor;
-        while (temp != NULL) {
+        while (temp != nullptr) {
             if (i == temp->getMonitor())
                 files.append(" " + this->input_dir + temp->getCountry());
             temp = temp->getNext();
@@ -133,7 +133,7 @@ void travelMonitorClient::createServer(int i) {
         int length;
         string* argArray = readString(files, &length);
         char* args[length + 1];
-        args[length] = NULL;
+        args[length] = nullptr;
         for (int i = 0;i < length;i++) {
             char* word = new char[argArray[i].length() + 1];
             word[argArray[i].length()] = '\0';
@@ -147,11 +147,12 @@ void travelMonitorClient::createServer(int i) {
 }
 
 void travelMonitorClient::openSockets() {
+    cout << "openSockets" << endl;
     if (gethostname(this->machineName, sizeof(this->machineName)) == -1) {
         perror("gethostname");
         exit(1);
     }
-    if ((this->ip = gethostbyname(this->machineName)) == NULL) {
+    if ((this->ip = gethostbyname(this->machineName)) == nullptr) {
         perror("gethostbyname");
         exit(1);
     }
@@ -167,16 +168,22 @@ void travelMonitorClient::openSockets() {
             perror("travelMonitorClient error opening socket");
             exit(-1);
         }
+        int optionE = 1;
+        if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optionE, sizeof(optionE)) < 0) {
+            perror("optionE setsockopt error");
+            exit(-1);
+        }
         this->client.sin_family = AF_INET;
-        this->client.sin_addr.s_addr = htonl(INADDR_ANY);
+        // this->client.sin_addr.s_addr = htonl(INADDR_ANY);
+        this->client.sin_addr.s_addr = inet_addr(this->externalAddress);
         this->client.sin_port = htons(port); /* The given port */
         this->clientptr = (struct sockaddr*)&(this->client);
         unsigned int clientlen = sizeof(this->client);
-
-        if (connect(sock, clientptr, clientlen) < 0) {
-            perror("travelMonitorClient connect");
-            exit(-1);
-        }
+        int connectStatus;
+        do
+            connectStatus = connect(sock, clientptr, clientlen);
+        while (connectStatus < 0);
+        cout << "connected to monitor " << i << endl;
         this->addFdToMonitor(i, sock);
     }
 }
@@ -235,7 +242,7 @@ void travelMonitorClient::receiveBlooms() {
         for (int i = 0;i < this->numMonitors;i++) {
             FD_SET(this->monitors->getSocketFD(i), &fileDecriptorSet);
         }
-        select(this->monitors->getSocketFD(this->numMonitors - 1) + 1, &fileDecriptorSet, NULL, NULL, NULL);
+        select(this->monitors->getSocketFD(this->numMonitors - 1) + 1, &fileDecriptorSet, nullptr, nullptr, nullptr);
 
         for (int i = 0;i < this->numMonitors;i++) {
             if (FD_ISSET(this->monitors->getSocketFD(i), &fileDecriptorSet)) {
@@ -367,7 +374,7 @@ void travelMonitorClient::travelRequest(string* arguments, int length) {
 
         int res;
         stringList* v = this->viruses->search(virusName);
-        if (v != NULL)
+        if (v != nullptr)
             res = this->blooms->getBloom(v)->check(id);
         else
         {
@@ -384,7 +391,7 @@ void travelMonitorClient::travelRequest(string* arguments, int length) {
             s.append(countryFrom + " ");
             s.append(countryTo + " ");
             s.append(virusName);
-            if (countryToMonitor->search(countryFrom) != NULL) {
+            if (countryToMonitor->search(countryFrom) != nullptr) {
                 sendStr(countryToMonitor->search(countryFrom)->getMonitor(), s);
                 string res = receiveStr(countryToMonitor->search(countryFrom)->getMonitor());
                 // cout << res << endl;
@@ -481,7 +488,7 @@ void travelMonitorClient::travelStats(string* arguments, int length) {
     if (length == 4) {
         cout << endl;
         statsList* temp = this->requests;
-        while (temp != NULL) {
+        while (temp != nullptr) {
             if (checkDate1.compare(temp->getDate()) <= 0 && checkDate2.compare(temp->getDate()) >= 0) {
                 if (temp->getVirusName() == virusName) {
                     temp->getStat() ? t++ : f++;
@@ -499,7 +506,7 @@ void travelMonitorClient::travelStats(string* arguments, int length) {
         cout << "- country: " << country << endl;
         cout << endl;
         statsList* temp = this->requests;
-        while (temp != NULL) {
+        while (temp != nullptr) {
             if (checkDate1.compare(temp->getDate()) <= 0 && checkDate2.compare(temp->getDate()) >= 0) {
                 if (temp->getVirusName() == virusName && temp->getCountry() == country) {
                     temp->getStat() ? t++ : f++;
@@ -525,7 +532,7 @@ void travelMonitorClient::addVaccinationRecords(string* arguments, int length) {
     if (length == 2) {
         string country = arguments[1];
         cout << "- country: " << country << endl;
-        if (this->countryToMonitor->search(country) != NULL) {
+        if (this->countryToMonitor->search(country) != nullptr) {
             // sendStr(this->countryToMonitor->search(country)->getMonitor(), "break");
             // this->sendSIGUSR1(this->countryToMonitor->search(country)->getMonitor());
             mainMonitor.receiveBlooms(this->countryToMonitor->search(country)->getMonitor());
@@ -670,14 +677,14 @@ string travelMonitorClient::receiveManyStr(int monitor, int* end) {
 }
 
 void travelMonitorClient::addCountryToMonitor(string c, int m) {
-    if (this->countryToMonitor == NULL)
+    if (this->countryToMonitor == nullptr)
         this->countryToMonitor = new monitorCountryPairList(c, m);
     else
         this->countryToMonitor = this->countryToMonitor->add(c, m);
 }
 
 void travelMonitorClient::addRequest(string c, string v, date dt, bool s) {
-    if (this->requests == NULL)
+    if (this->requests == nullptr)
         this->requests = new statsList(c, v, dt, s);
     else
         this->requests = this->requests->add(c, v, dt, s);
@@ -685,7 +692,7 @@ void travelMonitorClient::addRequest(string c, string v, date dt, bool s) {
 
 void travelMonitorClient::addNewVirus(string virusName)
 {
-    if (this->viruses->search(virusName) == NULL) // if we dont have that virus add it to the list of viruses
+    if (this->viruses->search(virusName) == nullptr) // if we dont have that virus add it to the list of viruses
     {                                         // and make the bloom filter and the skiplist for that virus
         this->viruses = this->viruses->add(virusName);
         this->blooms = this->blooms->add(this->viruses);
@@ -693,7 +700,7 @@ void travelMonitorClient::addNewVirus(string virusName)
 }
 
 void travelMonitorClient::addMonitor(int pid, int id) {
-    if (this->monitors == NULL)
+    if (this->monitors == nullptr)
         this->monitors = new monitorList(pid, id);
     else
         this->monitors->add(pid, id);

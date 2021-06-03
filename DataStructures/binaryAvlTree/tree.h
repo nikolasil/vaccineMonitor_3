@@ -32,7 +32,7 @@ public:
     treeNode* getLeft() { return this->left; }
     treeNode* getRight() { return this->right; }
     int getKey() { return this->citizen->getID(); }
-    int getBalanceHeight() { if (this == NULL) return 0; return this->balanceHeight; }
+    int getBalanceHeight() { if (this == nullptr) return 0; return this->balanceHeight; }
 
     // SETTERS
     void setCitizen(citizenRecord* citizen) { this->citizen = citizen; }

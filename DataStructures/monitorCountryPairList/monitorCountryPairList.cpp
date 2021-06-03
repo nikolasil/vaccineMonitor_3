@@ -11,7 +11,7 @@ monitorCountryPairList::monitorCountryPairList(string d, int m) : country(d), mo
 
 monitorCountryPairList::~monitorCountryPairList()
 {
-    if (this->getNext() != NULL)
+    if (this->getNext() != nullptr)
         delete this->getNext();
 }
 
@@ -26,7 +26,7 @@ monitorCountryPairList* monitorCountryPairList::add(string d, int m)
 monitorCountryPairList* monitorCountryPairList::search(string d)
 {
     monitorCountryPairList* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         if (temp->getCountry().compare(d) == 0)
             return temp;
@@ -39,7 +39,7 @@ monitorCountryPairList* monitorCountryPairList::search(string d)
 void monitorCountryPairList::print()
 {
     monitorCountryPairList* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         cout << temp->country << " is assinged to monitor " << temp->monitor << endl;;
         temp = temp->getNext();

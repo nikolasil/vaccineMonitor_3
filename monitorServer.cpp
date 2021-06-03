@@ -15,7 +15,11 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <cstdlib>
+#include <pthread.h>
+
 #include "monitorServer.h"
+#include "cyclicBuffer.h"
 #include "DataStructures/stringList/stringList.h"
 #include "DataStructures/bloomFilter/bloomFilter.h"
 #include "DataStructures/skipList/skipList.h"
@@ -30,19 +34,19 @@ monitorServer monitor = monitorServer();
 monitorServer::~monitorServer() {}
 
 // void monitorServer::suicide() {
-//     if (this->tree != NULL)
+//     if (this->tree != nullptr)
 //         delete this->tree;
-//     if (this->skipLists != NULL)
+//     if (this->skipLists != nullptr)
 //         delete this->skipLists;
-//     if (this->blooms != NULL)
+//     if (this->blooms != nullptr)
 //         delete this->blooms;
-//     if (this->viruses != NULL)
+//     if (this->viruses != nullptr)
 //         delete this->viruses;
-//     if (this->countries != NULL)
+//     if (this->countries != nullptr)
 //         delete this->countries;
-//     if (this->filesReaded != NULL)
+//     if (this->filesReaded != nullptr)
 //         delete this->filesReaded;
-//     if (this->command != NULL)
+//     if (this->command != nullptr)
 //         delete[] this->command;
 
 //     cout << "monitorServer " << getpid() << " Terminated" << endl;
@@ -67,7 +71,7 @@ monitorServer::~monitorServer() {}
 //             else
 //                 cout << "Invalid command!" << endl;
 //         }
-//         if (command != NULL)
+//         if (command != nullptr)
 //             delete[] command;
 //     }
 // }
@@ -80,13 +84,13 @@ monitorServer::~monitorServer() {}
 //     string virusName = arguments[5];
 
 //     stringList* v = this->viruses->search(virusName);
-//     if (v != NULL)
+//     if (v != nullptr)
 //     {
 //         skipList* l;
 //         l = skipLists->getVaccinated(v);
 //         skipListNode* n = l->search(id, 't');
 
-//         if (n == NULL) {
+//         if (n == nullptr) {
 //             sendStr("NO");
 //             f++;
 //         }
@@ -104,7 +108,7 @@ monitorServer::~monitorServer() {}
 // void monitorServer::searchVaccinationStatus(string* arguments, int length) {
 //     id = stoi(arguments[1]);
 //     treeNode* citizen = this->tree->search(this->tree, id);
-//     if (citizen != NULL) {
+//     if (citizen != nullptr) {
 //         int end = 1;
 //         if (write(writeFD, &end, sizeof(int)) == -1)
 //             if (errno != 4)
@@ -119,7 +123,7 @@ monitorServer::~monitorServer() {}
 //         sendStr(age);
 
 //         listStatus* status = citizen->getCitizen()->getStatus();
-//         while (status != NULL) {
+//         while (status != nullptr) {
 //             // cout << "1" << endl;
 //             string virusStatus = "";
 //             virusStatus.append(status->getVirusName()->getString());
@@ -150,7 +154,7 @@ monitorServer::~monitorServer() {}
 //     int pid = getpid();
 //     ofstream logfile("logfiles/log_file." + to_string(pid));
 //     stringList* temp = this->countries;
-//     while (temp != NULL) {
+//     while (temp != nullptr) {
 //         logfile << temp->getString() << endl;
 //         temp = temp->getNext();
 //     }
@@ -172,7 +176,7 @@ void monitorServer::start(int p, int t, int sb, int cb, int bloom, char** paths,
     this->argPaths = paths;
     this->argNumPaths = numPaths;
 
-    this->tree = NULL;
+    this->tree = nullptr;
     this->countries = new stringList();
     checkNew(this->countries);
 
@@ -188,6 +192,9 @@ void monitorServer::start(int p, int t, int sb, int cb, int bloom, char** paths,
     this->blooms = new bloomFilterList(this->bloomSize);
     checkNew(this->blooms);
 
+    this->buff = new cyclicBuffer(this->cyclicBuffer);
+    checkNew(this->buff);
+
     this->t = 0;
     this->f = 0;
 }
@@ -197,7 +204,7 @@ void monitorServer::initializeServer() {
         perror("gethostname");
         exit(1);
     }
-    if ((this->ip = gethostbyname(this->machineName)) == NULL) {
+    if ((this->ip = gethostbyname(this->machineName)) == nullptr) {
         perror("gethostbyname");
         exit(1);
     }
@@ -210,9 +217,15 @@ void monitorServer::initializeServer() {
         perror("travelMonitorClient error opening socket");
         exit(-1);
     }
+    int optionE = 1;
+    if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &optionE, sizeof(optionE)) < 0) {
+        perror("Couldn't set Socket Options");
+        exit(EXIT_FAILURE);
+    }
 
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    // server.sin_addr.s_addr = htonl(INADDR_ANY);
+    this->server.sin_addr.s_addr = inet_addr(this->externalAddress);
     server.sin_port = htons(this->port);
 
     this->serverptr = (struct sockaddr*)&(this->server);
@@ -235,26 +248,45 @@ void monitorServer::initializeServer() {
     cout << "accepted" << endl;
 }
 
+void* threadFunc(void* args) {
+    monitor.openPathsByThreads();
+}
+
+void monitorServer::openThreads() {
+    pthread_t threads[this->numThreads];
+    pthread_mutex_init(&(this->mutex), NULL);
+
+    for (int i = 0; i < this->numThreads; i++) {
+        cout << "creating thread, " << i << endl;
+        if (pthread_create(&threads[i], nullptr, threadFunc, nullptr) != 0) {
+            perror("create thread");
+            exit(-1);
+        }
+    }
+
+    while (1) {
+        // this->buff->put();
+    }
+
+    for (int i = 0; i < this->numThreads; i++) {
+        cout << "pthread_join, " << i << endl;
+        if (pthread_join(threads[i], nullptr) != 0) {
+            perror("join thread");
+            exit(-1);
+        }
+    }
+    pthread_mutex_destroy(&(this->mutex));
+}
+
+
 void monitorServer::openPathsByThreads() {
-    for (int i = 0; i < this->argNumPaths; i++) {
-        string pathString(this->argPaths[i]);
-        // cout << "File: " << pathString << endl;
-        DIR* input;
-        struct dirent* dir;
-        char* in2 = &pathString[0];
-        input = opendir(in2);
-        if (input)
-        {
-            while ((dir = readdir(input)) != NULL)
-            {
-                string FILE = dir->d_name;
-                if (FILE.compare("..") == 0 || FILE.compare(".") == 0)
-                    continue;
-                if (this->addNewFile(pathString + "/" + FILE)) {
-                    // cout << "TXT : " << pathString + "/" + FILE << endl;
-                    this->addFromFile(pathString + "/" + FILE);
-                }
-            }
+    while (1) {
+        string FILE = this->buff->take();
+        if (FILE.compare("..") == 0 || FILE.compare(".") == 0)
+            continue;
+        if (this->addNewFile(pathString + "/" + FILE)) {
+            // cout << "TXT : " << pathString + "/" + FILE << endl;
+            this->addFromFile(pathString + "/" + FILE);
         }
     }
 }
@@ -278,7 +310,9 @@ void monitorServer::addFromFile(string filepath)
     {
         // cout << line << endl;
         splitString(&words, line, &length);
+        pthread_mutex_lock(&(this->mutex));
         addRecord(length, words, line);
+        pthread_mutex_unlock(&(this->mutex));
         length = 0;
     }
     delete[] words;
@@ -309,7 +343,7 @@ void monitorServer::addRecord(int length, string* words, string line)
     checkNew(citizen);
 
     string result = "";
-    citizenRecord* alreadyInTree = NULL;
+    citizenRecord* alreadyInTree = nullptr;
 
     tree = this->tree->insert(tree, citizen, &alreadyInTree, &result, false); // insert in tree
 
@@ -420,7 +454,7 @@ int monitorServer::checkSyntaxRecord(string errorMessage, int length, string* wo
 // void monitorServer::sendBlooms() {
 
 //     stringList* temp = this->viruses;
-//     while (temp != NULL) {
+//     while (temp != nullptr) {
 //         sendStr(temp->getString());
 //         temp = temp->getNext();
 //     }
@@ -429,7 +463,7 @@ int monitorServer::checkSyntaxRecord(string errorMessage, int length, string* wo
 //         cout << "Error in writting end with errno=" << errno << endl;
 
 //     temp = this->viruses;
-//     while (temp != NULL) {
+//     while (temp != nullptr) {
 //         bloomFilter* bloomV = this->blooms->getBloom(temp);
 //         sendStr(temp->getString());
 //         int pos = 0;
@@ -455,7 +489,7 @@ int monitorServer::checkSyntaxRecord(string errorMessage, int length, string* wo
 
 void monitorServer::addNewVirus(string virusName)
 {
-    if (this->viruses->search(virusName) == NULL) // if we dont have that virus add it to the list of viruses
+    if (this->viruses->search(virusName) == nullptr) // if we dont have that virus add it to the list of viruses
     {                                         // and make the bloom filter and the skiplist for that virus
         this->viruses = this->viruses->add(virusName);
         this->blooms = this->blooms->add(this->viruses);
@@ -465,7 +499,7 @@ void monitorServer::addNewVirus(string virusName)
 
 void monitorServer::addNewCountry(string countryName)
 {
-    if (this->countries->search(countryName) == NULL) // if we dont have that country add it to the list of Countries
+    if (this->countries->search(countryName) == nullptr) // if we dont have that country add it to the list of Countries
     {
         this->countries = this->countries->add(countryName);
     }
@@ -473,9 +507,11 @@ void monitorServer::addNewCountry(string countryName)
 
 int monitorServer::addNewFile(string file)
 {
-    if (this->filesReaded->search(file) == NULL) // if we dont have that country add it to the list of Countries
+    if (this->filesReaded->search(file) == nullptr) // if we dont have that country add it to the list of Countries
     {
+        pthread_mutex_lock(&(this->mutex));
         this->filesReaded = this->filesReaded->add(file);
+        pthread_mutex_unlock(&(this->mutex));
         return 1;
     }
     return 0;

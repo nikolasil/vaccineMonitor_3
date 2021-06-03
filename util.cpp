@@ -260,7 +260,7 @@ int checkArguments(int argc, char* argv[], int& numMonitors, int& socketBufferSi
 
 void checkNew(void* ptr)
 {
-    if (ptr == NULL)
+    if (ptr == nullptr)
     {
         cout << "errno = " << errno << endl;
         perror("errno");
@@ -314,7 +314,7 @@ string* readString(string input, int* length)
     *length = i - 1;
     istringstream str2(input);
     string* arguments = new string[i - 1];
-    if (arguments == NULL)
+    if (arguments == nullptr)
     {
         cout << "readString errno = " << errno << endl;
         perror("errno");

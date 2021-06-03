@@ -19,7 +19,7 @@ travelMonitorClient.o:
 
 # Monitor
 monitorServer: $(MONITOR_SERVER_FILES)
-	$(CC) $(CFLAFS) -o monitorServer $(MONITOR_SERVER_FILES)
+	$(CC) $(CFLAFS) -o monitorServer $(MONITOR_SERVER_FILES) -lpthread
 
 mainMonitorServer.o:
 	$(CC) $(CFLAFS) -c mainMonitorServer.cpp

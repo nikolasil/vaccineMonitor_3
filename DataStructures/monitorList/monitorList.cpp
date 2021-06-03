@@ -6,19 +6,19 @@
 monitorList::monitorList() {}
 
 monitorList::monitorList(int pid, int id) : pid(pid), id(id) {
-    this->next = NULL;
+    this->next = nullptr;
 }
 
 monitorList::~monitorList()
 {
-    if (this->getNext() != NULL)
+    if (this->getNext() != nullptr)
         delete this->getNext();
 }
 
 monitorList* monitorList::add(int pid, int id)
 {
     monitorList* temp = this->getPIDNode(id);
-    if (temp != NULL) {
+    if (temp != nullptr) {
         // already exists then update the pid
 
         // cout << "Old pid " << temp->getPID() << endl;
@@ -27,7 +27,7 @@ monitorList* monitorList::add(int pid, int id)
         return temp;
     }
     temp = this;
-    while (temp->getNext() != NULL)
+    while (temp->getNext() != nullptr)
         temp = temp->getNext();
 
     monitorList* new_node = new monitorList(pid, id);
@@ -73,7 +73,7 @@ monitorList* monitorList::getPIDNode(int m) {
 
 int monitorList::getID(int pid) {
     monitorList* temp = this;
-    while (temp != NULL) {
+    while (temp != nullptr) {
         if (temp->getPID() == pid)
             return temp->getID();
         temp = temp->getNext();
@@ -83,7 +83,7 @@ int monitorList::getID(int pid) {
 
 void monitorList::print() {
     monitorList* temp = this;
-    while (temp != NULL) {
+    while (temp != nullptr) {
         cout << temp->id << " " << temp->pid << endl;
         temp = temp->getNext();
     }

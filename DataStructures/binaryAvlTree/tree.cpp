@@ -12,8 +12,8 @@
 treeNode::treeNode(citizenRecord* citizen)
 {
     this->setCitizen(citizen);
-    this->setLeft(NULL);
-    this->setRight(NULL);
+    this->setLeft(nullptr);
+    this->setRight(nullptr);
     this->setBalanceHeight(1);
 }
 
@@ -54,7 +54,7 @@ treeNode* treeNode::leftRotation(treeNode* x)
 
 treeNode* treeNode::insert(treeNode* node, citizenRecord* citizen, citizenRecord** alreadyInTree, string* result, bool checkNO)
 {
-    if (node == NULL)
+    if (node == nullptr)
     {
         *result = "NEW CITIZEN";
         return (new treeNode(citizen));
@@ -137,7 +137,7 @@ treeNode* treeNode::insert(treeNode* node, citizenRecord* citizen, citizenRecord
 
 treeNode* treeNode::search(treeNode* root, int key)
 {
-    if (root == NULL || root->getKey() == key)
+    if (root == nullptr || root->getKey() == key)
         return root;
 
     if (root->getKey() < key)
@@ -148,7 +148,7 @@ treeNode* treeNode::search(treeNode* root, int key)
 
 int treeNode::getBalance()
 {
-    if (this == NULL)
+    if (this == nullptr)
         return 0;
     return this->getLeft()->getBalanceHeight() - this->getRight()->getBalanceHeight();
 }

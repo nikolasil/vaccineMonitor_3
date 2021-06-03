@@ -9,14 +9,14 @@ using namespace std;
 
 skipListNode::skipListNode(citizenRecord* citizen) : citizen(citizen)
 {
-    this->setNext(NULL);
-    this->setDown(NULL);
+    this->setNext(nullptr);
+    this->setDown(nullptr);
 }
 
 skipListNode::skipListNode(skipListNode* node)
 {
     this->setCitizen(node->getCitizen());
-    this->setNext(NULL);
+    this->setNext(nullptr);
     this->setDown(node);
 }
 
@@ -27,7 +27,7 @@ skipListNode::~skipListNode()
 void skipListNode::destroy()
 {
     skipListNode* temp = this->getNext();
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         skipListNode* next = temp->getNext();
         delete temp;
@@ -39,11 +39,11 @@ void skipListNode::destroy()
 void skipListNode::printIds()
 {
     skipListNode* temp = this->getNext();
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         cout << temp->getId() << " ";
         temp = temp->getNext();
-        if (temp->getNext() == NULL)
+        if (temp->getNext() == nullptr)
             break;
     }
     cout << endl;
@@ -52,11 +52,11 @@ void skipListNode::printIds()
 void skipListNode::printCitizens()
 {
     skipListNode* temp = this->getNext();
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         temp->getCitizen()->printCredentials();
         temp = temp->getNext();
-        if (temp->getNext() == NULL)
+        if (temp->getNext() == nullptr)
             break;
     }
     cout << endl;
@@ -65,7 +65,7 @@ void skipListNode::printCitizens()
 void skipListNode::add(skipListNode* new_node)
 {
     skipListNode* curr = this;
-    while (curr->getNext() != NULL && curr->getNext()->getId() < new_node->getId())
+    while (curr->getNext() != nullptr && curr->getNext()->getId() < new_node->getId())
         curr = curr->getNext();
 
     new_node->setNext(curr->getNext());
@@ -78,9 +78,9 @@ skipListLevel::skipListLevel(skipListLevel* prevLevel, int l) : myLevel(l)
 /* when we make a new level we must make the negative and positive infinity points
 to the down levels negative and positive infinity  */
 {
-    this->setList(new skipListNode((citizenRecord*)NULL));
+    this->setList(new skipListNode((citizenRecord*)nullptr));
     checkNew(this->getList());
-    this->setPosInf(new skipListNode((citizenRecord*)NULL));
+    this->setPosInf(new skipListNode((citizenRecord*)nullptr));
     checkNew(this->getPosInf());
     this->getList()->setNext(this->getPosInf());
 
@@ -92,13 +92,13 @@ to the down levels negative and positive infinity  */
 
 skipListLevel::skipListLevel() : myLevel(0) /* this costructor in beeing called only for the 0 level */
 {
-    this->setList(new skipListNode((citizenRecord*)NULL));
+    this->setList(new skipListNode((citizenRecord*)nullptr));
     checkNew(this->getList());
-    this->setPosInf(new skipListNode((citizenRecord*)NULL));
+    this->setPosInf(new skipListNode((citizenRecord*)nullptr));
     checkNew(this->getPosInf());
     this->getList()->setNext(this->getPosInf());
 
-    this->setDownLevel(NULL);
+    this->setDownLevel(nullptr);
 }
 
 skipListLevel::~skipListLevel() {}
@@ -135,7 +135,7 @@ skipList::skipList() /* create the skip list with level 0 that has negative infi
 skipList::~skipList() /* delete the all the skip list levels and nodes */
 {
     skipListLevel* temp = this->getCeiling();
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         temp->getList()->destroy();
         skipListLevel* next = temp->getDownLevel();
@@ -151,7 +151,7 @@ void skipList::add(int id, citizenRecord* citizen) /* add the id in the skip lis
     skipListNode* currNode = currLevel->getNegInf();
     skipListNode* nextNode = currNode->getNext();
 
-    skipListNode* prevCreated = NULL;
+    skipListNode* prevCreated = nullptr;
     int create = 0;
     int heightOfNewNode = 0;
     while (this->coinFlip() && (this->getCeiling()->getMyLevel() >= heightOfNewNode) && this->getCeiling()->getMyLevel() < maxLevels - 1)
@@ -191,7 +191,7 @@ void skipList::add(int id, citizenRecord* citizen) /* add the id in the skip lis
                 }
             }
 
-            if (currNode->getDown() != NULL)
+            if (currNode->getDown() != nullptr)
             { // if there is a down level
                 // step down
                 currNode = currNode->getDown();
@@ -230,7 +230,7 @@ void skipList::remove(int id)
     {
         if (id < nextNode->getId())
         {
-            if (currNode->getDown() != NULL)
+            if (currNode->getDown() != nullptr)
             { // if there is a down level
                 // step down
                 currNode = currNode->getDown();
@@ -262,7 +262,7 @@ void skipList::remove(int id)
                 delete this->getCeiling();
                 this->setCeiling(temp);
             }
-            if (nextNode != NULL)
+            if (nextNode != nullptr)
             {
                 currNode = currNode->getDown();
                 while (1)
@@ -290,7 +290,7 @@ skipListNode* skipList::search(int id, char top_bottom = 't')
     {
         if (id < nextNode->getId())
         {
-            if (currNode->getDown() != NULL)
+            if (currNode->getDown() != nullptr)
             { // if there is a down level
                 // step down
                 currNode = currNode->getDown();
@@ -298,7 +298,7 @@ skipListNode* skipList::search(int id, char top_bottom = 't')
                 currLevel = currLevel->getDownLevel();
             }
             else
-                return NULL;
+                return nullptr;
         }
         else if (id > nextNode->getId())
         {
@@ -311,7 +311,7 @@ skipListNode* skipList::search(int id, char top_bottom = 't')
             {
                 while (1)
                 {
-                    if (nextNode->getDown() == NULL)
+                    if (nextNode->getDown() == nullptr)
                         break;
 
                     nextNode = nextNode->getDown();
@@ -333,7 +333,7 @@ bool skipList::isEmpty()
 void skipList::printIds() /* print all the levels one by one */
 {
     skipListLevel* temp = this->getCeiling();
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         temp->printIds();
         temp = temp->getDownLevel();
@@ -349,10 +349,10 @@ void skipList::printFloor() /* print all the levels one by one */
 
 skipList_List::skipList_List()
 {
-    this->setVirus(NULL);
-    this->setVaccinated(NULL);
-    this->setNotVaccinated(NULL);
-    this->setNext(NULL);
+    this->setVirus(nullptr);
+    this->setVaccinated(nullptr);
+    this->setNotVaccinated(nullptr);
+    this->setNext(nullptr);
 }
 
 skipList_List::skipList_List(stringList* virus)
@@ -362,25 +362,25 @@ skipList_List::skipList_List(stringList* virus)
     checkNew(this->getVaccinated());
     this->setNotVaccinated(new skipList());
     checkNew(this->getNotVaccinated());
-    this->setNext(NULL);
+    this->setNext(nullptr);
 }
 
 skipList_List::~skipList_List()
 {
-    if (this->getVaccinated() != NULL)
+    if (this->getVaccinated() != nullptr)
         delete this->getVaccinated();
 
-    if (this->getNotVaccinated() != NULL)
+    if (this->getNotVaccinated() != nullptr)
         delete this->getNotVaccinated();
 
-    if (this->getNext() != NULL)
+    if (this->getNext() != nullptr)
         delete this->getNext();
 
 }
 
 skipList_List* skipList_List::add(stringList* virus)
 {
-    if (this->getVirus() == NULL)
+    if (this->getVirus() == nullptr)
     {
         this->setVirus(virus);
         this->setVaccinated(new skipList());
@@ -398,33 +398,33 @@ skipList_List* skipList_List::add(stringList* virus)
 skipList* skipList_List::getVaccinated(stringList* virus)
 {
     skipList_List* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         if (temp->getVirus()->getString().compare(virus->getString()) == 0)
             return temp->getVaccinated();
 
         temp = temp->getNext();
     }
-    return NULL;
+    return nullptr;
 }
 
 skipList* skipList_List::getNotVaccinated(stringList* virus)
 {
     skipList_List* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         if (temp->getVirus()->getString().compare(virus->getString()) == 0)
             return temp->getNotVaccinated();
 
         temp = temp->getNext();
     }
-    return NULL;
+    return nullptr;
 }
 
 void skipList_List::setVaccinated(skipList* l, stringList* virus)
 {
     skipList_List* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         if (temp->getVirus()->getString().compare(virus->getString()) == 0)
         {
@@ -439,7 +439,7 @@ void skipList_List::setVaccinated(skipList* l, stringList* virus)
 void skipList_List::setNotVaccinated(skipList* l, stringList* virus)
 {
     skipList_List* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         if (temp->getVirus()->getString().compare(virus->getString()) == 0)
         {

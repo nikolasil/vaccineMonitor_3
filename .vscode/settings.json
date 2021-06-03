@@ -6,6 +6,9 @@
         "ostream": "cpp",
         "xutility": "cpp",
         "initializer_list": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "cstdlib": "cpp",
+        "atomic": "cpp",
+        "xlocnum": "cpp"
     }
 }

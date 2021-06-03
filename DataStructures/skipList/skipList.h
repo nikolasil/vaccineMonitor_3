@@ -29,7 +29,7 @@ public:
     // GETTERS
     skipListNode* getNext() { return this->next; }
     skipListNode* getDown() { return this->down; }
-    int getId() { if (this->citizen != NULL) return this->citizen->getID(); else if (this->next == NULL) return POS_INF; return NEG_INF; }
+    int getId() { if (this->citizen != nullptr) return this->citizen->getID(); else if (this->next == nullptr) return POS_INF; return NEG_INF; }
     citizenRecord* getCitizen() { return this->citizen; }
 
     // SETTERS

@@ -7,19 +7,19 @@
 
 
 statsList::statsList() : country(""), virusName("") {
-    this->next == NULL;
+    this->next == nullptr;
 }
 
 statsList::statsList(string c, string v, date dt, bool s) : country(c), virusName(v), stat(s) {
     this->d.setYear(dt.getYear());
     this->d.setMonth(dt.getMonth());
     this->d.setDay(dt.getDay());
-    this->next == NULL;
+    this->next == nullptr;
 }
 
 statsList::~statsList()
 {
-    if (this->getNext() != NULL)
+    if (this->getNext() != nullptr)
         delete this->getNext();
 }
 
@@ -52,7 +52,7 @@ void statsList::printNode()
 void statsList::print()
 {
     statsList* temp = this;
-    while (temp != NULL)
+    while (temp != nullptr)
     {
         temp->printNode();
         temp = temp->getNext();

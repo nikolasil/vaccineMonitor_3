@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     monitor.start(stoi(argv[1]), stoi(argv[3]), stoi(argv[5]), stoi(argv[7]), stoi(argv[9]), paths, numPaths);
     monitor.initializeServer();
     monitor.receiveId();
-    monitor.openPathsByThreads();
+    monitor.openThreads();
     // monitor.printAllCountries();
     // monitor.sendBlooms();
     // while (1) {
@@ -27,7 +27,6 @@ int main(int argc, char* argv[])
     // }
     // monitor.printAllCountries();
     // monitor.printAllViruses();
-    sleep(5);
     cout << "m end" << endl;
     return 0;
 }
