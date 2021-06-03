@@ -2,7 +2,7 @@ CC = g++ -std=c++11
 CFLAFS = -g
 
 TRAVEL_MONITOR_CLIENT_FILES = mainTravelMonitorClient.o travelMonitorClient.o util.o monitorCountryPairList.o monitorList.o bloomFilter.o stringList.o date.o statsList.o
-MONITOR_SERVER_FILES = mainMonitorServer.o monitorServer.o util.o stringList.o citizen.o tree.o bloomFilter.o date.o skipList.o
+MONITOR_SERVER_FILES = mainMonitorServer.o monitorServer.o util.o stringList.o citizen.o tree.o bloomFilter.o date.o skipList.o cyclicBuffer.o
 
 all: clean travelMonitorClient monitorServer
 
@@ -26,6 +26,9 @@ mainMonitorServer.o:
 
 monitorServer.o:
 	$(CC) $(CFLAFS) -c monitorServer.cpp
+	
+cyclicBuffer.o:
+	$(CC) $(CFLAFS) -c cyclicBuffer.cpp
 
 
 # General Files

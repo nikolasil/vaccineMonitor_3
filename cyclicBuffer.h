@@ -9,6 +9,8 @@
 #include <unistd.h>
 
 
+using namespace std;
+
 class cyclicBuffer {
 public:
     cyclicBuffer(int s);
@@ -30,6 +32,6 @@ private:
     pthread_mutex_t mtx;
     pthread_cond_t cond_nonempty;
     pthread_cond_t cond_nonfull;
-}
+};
 
 #endif

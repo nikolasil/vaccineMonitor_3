@@ -192,7 +192,7 @@ void monitorServer::start(int p, int t, int sb, int cb, int bloom, char** paths,
     this->blooms = new bloomFilterList(this->bloomSize);
     checkNew(this->blooms);
 
-    this->buff = new cyclicBuffer(this->cyclicBuffer);
+    this->buff = new cyclicBuffer(this->cyclicBufferSize);
     checkNew(this->buff);
 
     this->t = 0;
@@ -284,9 +284,8 @@ void monitorServer::openPathsByThreads() {
         string FILE = this->buff->take();
         if (FILE.compare("..") == 0 || FILE.compare(".") == 0)
             continue;
-        if (this->addNewFile(pathString + "/" + FILE)) {
-            // cout << "TXT : " << pathString + "/" + FILE << endl;
-            this->addFromFile(pathString + "/" + FILE);
+        if (this->addNewFile(FILE)) {
+            this->addFromFile(FILE);
         }
     }
 }

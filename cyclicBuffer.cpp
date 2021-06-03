@@ -14,7 +14,7 @@ cyclicBuffer::cyclicBuffer(int s) : size(s) {
     this->count = 0;
     pthread_mutex_init(&(this->mtx), nullptr);
     pthread_cond_init(&(this->cond_nonempty), nullptr);
-    pthread_cond_init(&(this->cond_nonfull), , nullptr);
+    pthread_cond_init(&(this->cond_nonfull), nullptr);
 }
 
 cyclicBuffer::~cyclicBuffer() {
@@ -28,11 +28,11 @@ cyclicBuffer::~cyclicBuffer() {
 string cyclicBuffer::take() {
     string data = "";
     pthread_mutex_lock(&(this->mtx));
-    while (pool->count <= 0) {
+    while (this->count <= 0) {
         cout << "Buffer is empty" << endl;
         pthread_cond_wait(&(this->cond_nonempty), &(this->mtx));
     }
-    data = this->data[this->start];
+    data = this->buff[this->start];
     this->start = (this->start + 1) % this->size;
     this->count--;
     pthread_mutex_unlock(&(this->mtx));
@@ -46,7 +46,7 @@ void cyclicBuffer::put(string txt) {
         pthread_cond_wait(&(this->cond_nonfull), &mtx);
     }
     this->end = (this->end + 1) % this->size;
-    this->data[this->end] = txt;
+    this->buff[this->end] = txt;
     this->count++;
     pthread_mutex_unlock(&(this->mtx));
 }

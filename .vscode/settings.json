@@ -9,6 +9,7 @@
         "iosfwd": "cpp",
         "cstdlib": "cpp",
         "atomic": "cpp",
-        "xlocnum": "cpp"
+        "xlocnum": "cpp",
+        "xiosbase": "cpp"
     }
 }
