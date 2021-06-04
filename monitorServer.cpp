@@ -249,27 +249,50 @@ void monitorServer::initializeServer() {
 }
 
 void* threadFunc(void* args) {
-    monitor.openPathsByThreads();
+    int id = *(int*)args;
+    cout << "thread " << id << " started" << endl;
+    monitor.openPathsByThreads(id);
+    cout << "thread " << id << " ended" << endl;
+    delete (int*)args;
 }
 
 void monitorServer::openThreads() {
-    pthread_t threads[this->numThreads];
+    this->threads = new pthread_t[this->numThreads];
     pthread_mutex_init(&(this->mutex), NULL);
 
     for (int i = 0; i < this->numThreads; i++) {
-        cout << "creating thread, " << i << endl;
-        if (pthread_create(&threads[i], nullptr, threadFunc, nullptr) != 0) {
+        int* t_id = new int();
+        *t_id = i;
+        if (pthread_create(&threads[i], nullptr, threadFunc, t_id) != 0) {
             perror("create thread");
             exit(-1);
         }
     }
 
-    while (1) {
-        // this->buff->put();
+    for (int i = 0; i < this->argNumPaths; i++) {
+        string dirArg(this->argPaths[i]);
+        cout << "Directory: " << dirArg << endl;
+        DIR* input;
+        struct dirent* dir;
+        char* in2 = &dirArg[0];
+        input = opendir(in2);
+        if (input)
+        {
+            while ((dir = readdir(input)) != NULL)
+            {
+                string txt = dir->d_name;
+                if (txt.compare("..") == 0 || txt.compare(".") == 0)
+                    continue;
+                cout << "put attempt " << txt << endl;
+                this->buff->put(txt);
+                this->buff->singalEmpty();
+            }
+        }
     }
+    this->buff->waitTillEmpty();
 
     for (int i = 0; i < this->numThreads; i++) {
-        cout << "pthread_join, " << i << endl;
+        cout << "pthread_join " << i << endl;
         if (pthread_join(threads[i], nullptr) != 0) {
             perror("join thread");
             exit(-1);
@@ -279,11 +302,11 @@ void monitorServer::openThreads() {
 }
 
 
-void monitorServer::openPathsByThreads() {
-    while (1) {
+void monitorServer::openPathsByThreads(int id) {
+    while (true) {
         string FILE = this->buff->take();
-        if (FILE.compare("..") == 0 || FILE.compare(".") == 0)
-            continue;
+        cout << id << " took " << FILE << endl;
+        this->buff->singalFull();
         if (this->addNewFile(FILE)) {
             this->addFromFile(FILE);
         }
@@ -307,7 +330,6 @@ void monitorServer::addFromFile(string filepath)
     int length = 0;
     while (getline(file, line))
     {
-        // cout << line << endl;
         splitString(&words, line, &length);
         pthread_mutex_lock(&(this->mutex));
         addRecord(length, words, line);

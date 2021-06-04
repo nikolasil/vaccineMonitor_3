@@ -28,7 +28,7 @@ public:
     void start(int p, int t, int sb, int cb, int bloom, char** paths, int numPaths);
     void initializeServer();
 
-    void openPathsByThreads();
+    void openPathsByThreads(int id);
     void receiveId();
     void openThreads();
 
@@ -70,6 +70,8 @@ private:
 
     pthread_mutex_t mutex;
     cyclicBuffer* buff;
+    pthread_t* threads;
+
     int id;
     int port;
     int sock;

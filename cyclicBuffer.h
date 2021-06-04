@@ -19,6 +19,10 @@ public:
 
     void singalEmpty() { pthread_cond_signal(&cond_nonempty); }
     void singalFull() { pthread_cond_signal(&cond_nonfull); }
+    void waitEmpty() { pthread_cond_wait(&cond_nonempty, &(this->mtx)); }
+    void waitFull() { pthread_cond_wait(&cond_nonfull, &(this->mtx)); }
+
+    void waitTillEmpty();
 
     string take();
     void put(string txt);
