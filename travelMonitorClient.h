@@ -28,12 +28,6 @@ public:
     void createServers();
     void createServer(int i);
     void sendIds();
-    void openFifos();
-    void openFifo(int i);
-    void sendCredentials();
-    void sendCredential(int i);
-    void sendCountries();
-    void sendCountry(string country, int i, bool first);
     void receiveBlooms();
     void receiveBlooms(int i);
     void sendDone();

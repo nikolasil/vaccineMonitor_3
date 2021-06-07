@@ -38,6 +38,7 @@ public:
     void suicide();
     void travelRequest(string* arguments, int length);
     void searchVaccinationStatus(string* arguments, int length);
+    void addVaccinationRecords(string* arguments, int length);
 
     void addFromFile(string filePath);
     void addRecord(int length, string* words, string line);

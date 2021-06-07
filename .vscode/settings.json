@@ -10,6 +10,10 @@
         "cstdlib": "cpp",
         "atomic": "cpp",
         "xlocnum": "cpp",
-        "xiosbase": "cpp"
+        "xiosbase": "cpp",
+        "type_traits": "cpp",
+        "istream": "cpp",
+        "xlocale": "cpp",
+        "memory": "cpp"
     }
 }

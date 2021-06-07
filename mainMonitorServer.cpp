@@ -20,13 +20,10 @@ int main(int argc, char* argv[])
     monitor.initializeServer();
     monitor.receiveId();
     monitor.openThreads();
-    // monitor.printAllCountries();
-    // monitor.sendBlooms();
-    // while (1) {
-    //     monitor.waitForCommands();
-    // }
-    // monitor.printAllCountries();
-    // monitor.printAllViruses();
+    monitor.sendBlooms();
+    while (1) {
+        monitor.waitForCommands();
+    }
     cout << "m end" << endl;
     return 0;
 }

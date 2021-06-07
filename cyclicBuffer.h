@@ -13,6 +13,7 @@ using namespace std;
 
 class cyclicBuffer {
 public:
+    cyclicBuffer(int s, int txtNumber);
     cyclicBuffer(int s);
     ~cyclicBuffer();
 
@@ -22,7 +23,17 @@ public:
     void waitEmpty() { pthread_cond_wait(&cond_nonempty, &(this->mtx)); }
     void waitFull() { pthread_cond_wait(&cond_nonfull, &(this->mtx)); }
 
-    void waitTillEmpty();
+    void increaseParsed() {
+        pthread_mutex_lock(&(this->mtx));
+        this->txtParsed++;
+        pthread_mutex_unlock(&(this->mtx));
+    }
+
+    void setTxtNumber(int a) { this->txtNumber = a; }
+
+    void finishedParsing() { while (this->txtParsed < this->txtNumber) {} }
+
+    void reset();
 
     string take();
     void put(string txt);
@@ -33,6 +44,9 @@ private:
     int end;
     int count;
     int size;
+    int txtNumber;
+    int txtParsed;
+
     pthread_mutex_t mtx;
     pthread_cond_t cond_nonempty;
     pthread_cond_t cond_nonfull;

@@ -31,8 +31,6 @@ using namespace std;
 
 monitorServer monitor = monitorServer();
 
-monitorServer::~monitorServer() {}
-
 // void monitorServer::suicide() {
 //     if (this->tree != nullptr)
 //         delete this->tree;
@@ -53,102 +51,144 @@ monitorServer::~monitorServer() {}
 //     exit(1);
 // }
 
-// void monitorServer::waitForCommands() {
-//     while (1)
-//     {
-//         // cout << "Waiting for commands " << this->id << endl;
-//         string input = receiveStr();
-//         int length;
-//         this->command = readString(input, &length);
-//         if (length > 0)
-//         {
-//             if (command[0].compare("/travelRequest") == 0)
-//                 this->travelRequest(command, length);
+void monitorServer::waitForCommands() {
+    while (1)
+    {
+        // cout << "Waiting for commands " << this->id << endl;
+        string input = receiveStr();
+        int length;
+        this->command = readString(input, &length);
+        if (length > 0)
+        {
+            if (command[0].compare("/travelRequest") == 0)
+                this->travelRequest(command, length);
 
-//             if (command[0].compare("/searchVaccinationStatus") == 0)
-//                 this->searchVaccinationStatus(command, length);
+            if (command[0].compare("/searchVaccinationStatus") == 0)
+                this->searchVaccinationStatus(command, length);
 
-//             else
-//                 cout << "Invalid command!" << endl;
-//         }
-//         if (command != nullptr)
-//             delete[] command;
-//     }
-// }
+            if (command[0].compare("/addVaccinationRecords") == 0)
+                this->addVaccinationRecords(command, length);
 
-// void monitorServer::travelRequest(string* arguments, int length) {
-//     id = stoi(arguments[1]);
-//     date checkDate = date((arguments[2]));
-//     string countryFrom = arguments[3];
-//     string countryTo = arguments[4];
-//     string virusName = arguments[5];
+            else
+                cout << "Invalid command!" << endl;
+        }
+        if (command != nullptr)
+            delete[] command;
+    }
+}
 
-//     stringList* v = this->viruses->search(virusName);
-//     if (v != nullptr)
-//     {
-//         skipList* l;
-//         l = skipLists->getVaccinated(v);
-//         skipListNode* n = l->search(id, 't');
+void monitorServer::travelRequest(string* arguments, int length) {
+    id = stoi(arguments[1]);
+    date checkDate = date((arguments[2]));
+    string countryFrom = arguments[3];
+    string countryTo = arguments[4];
+    string virusName = arguments[5];
 
-//         if (n == nullptr) {
-//             sendStr("NO");
-//             f++;
-//         }
-//         else {
-//             sendStr("YES " + n->getCitizen()->getStatus()->getVirusDate(v).getConcatenate());
-//             t++;
-//         }
-//     }
-//     else {
-//         sendStr("NO");
-//         f++;
-//     }
-// }
+    stringList* v = this->viruses->search(virusName);
+    if (v != nullptr)
+    {
+        skipList* l;
+        l = skipLists->getVaccinated(v);
+        skipListNode* n = l->search(id, 't');
 
-// void monitorServer::searchVaccinationStatus(string* arguments, int length) {
-//     id = stoi(arguments[1]);
-//     treeNode* citizen = this->tree->search(this->tree, id);
-//     if (citizen != nullptr) {
-//         int end = 1;
-//         if (write(writeFD, &end, sizeof(int)) == -1)
-//             if (errno != 4)
-//                 cout << "Error in writting to_tranfer with errno=" << errno << endl;
-//         string credentials = arguments[1] + " " + citizen->getCitizen()->getFirstName();
-//         credentials.append(" " + citizen->getCitizen()->getLastName());
-//         credentials.append(" " + citizen->getCitizen()->getCountry()->getString());
-//         sendStr(credentials);
+        if (n == nullptr) {
+            sendStr("NO");
+            f++;
+        }
+        else {
+            sendStr("YES " + n->getCitizen()->getStatus()->getVirusDate(v).getConcatenate());
+            t++;
+        }
+    }
+    else {
+        sendStr("NO");
+        f++;
+    }
+}
 
-//         string age = "AGE ";
-//         age.append(to_string(citizen->getCitizen()->getAge()));
-//         sendStr(age);
+void monitorServer::searchVaccinationStatus(string* arguments, int length) {
+    int id = stoi(arguments[1]);
+    treeNode* citizen = this->tree->search(this->tree, id);
+    if (citizen != nullptr) {
+        int end = 1;
+        if (write(this->sock, &end, sizeof(int)) == -1)
+            if (errno != 4)
+                cout << "Error in writting to_tranfer with errno=" << errno << endl;
+        string credentials = arguments[1] + " " + citizen->getCitizen()->getFirstName();
+        credentials.append(" " + citizen->getCitizen()->getLastName());
+        credentials.append(" " + citizen->getCitizen()->getCountry()->getString());
+        sendStr(credentials);
 
-//         listStatus* status = citizen->getCitizen()->getStatus();
-//         while (status != nullptr) {
-//             // cout << "1" << endl;
-//             string virusStatus = "";
-//             virusStatus.append(status->getVirusName()->getString());
-//             if (status->getVirusStatus() == 'y') {
-//                 virusStatus.append(" VACCINATED ON ");
-//                 virusStatus.append(status->getDateVaccinated().getConcatenate());
-//             }
-//             else {
-//                 virusStatus.append(" NOT YET VACCINATED");
-//             }
-//             sendStr(virusStatus);
-//             status = status->getNext();
-//         }
-//         end = -1;
-//         if (write(writeFD, &end, sizeof(int)) == -1)
-//             if (errno != 4)
-//                 cout << "Error in writting to_tranfer with errno=" << errno << endl;
-//     }
-//     else {
-//         int end = -1;
-//         if (write(writeFD, &end, sizeof(int)) == -1)
-//             if (errno != 4)
-//                 cout << "Error in writting to_tranfer with errno=" << errno << endl;
-//     }
-// }
+        string age = "AGE ";
+        age.append(to_string(citizen->getCitizen()->getAge()));
+        sendStr(age);
+
+        listStatus* status = citizen->getCitizen()->getStatus();
+        while (status != nullptr) {
+            string virusStatus = "";
+            virusStatus.append(status->getVirusName()->getString());
+            if (status->getVirusStatus() == 'y') {
+                virusStatus.append(" VACCINATED ON ");
+                virusStatus.append(status->getDateVaccinated().getConcatenate());
+            }
+            else {
+                virusStatus.append(" NOT YET VACCINATED");
+            }
+            sendStr(virusStatus);
+            status = status->getNext();
+        }
+        end = -1;
+        if (write(this->sock, &end, sizeof(int)) == -1)
+            if (errno != 4)
+                cout << "Error in writting to_tranfer with errno=" << errno << endl;
+    }
+    else {
+        int end = -1;
+        if (write(this->sock, &end, sizeof(int)) == -1)
+            if (errno != 4)
+                cout << "Error in writting to_tranfer with errno=" << errno << endl;
+    }
+}
+
+void monitorServer::addVaccinationRecords(string* arguments, int length) {
+    string dirArg = arguments[1];
+    int txtNumber = 0;
+
+    DIR* input;
+    struct dirent* dir;
+    char* in2 = &dirArg[0];
+    input = opendir(in2);
+    if (input)
+    {
+        while ((dir = readdir(input)) != NULL)
+        {
+            string txt = dir->d_name;
+            if (txt.compare("..") == 0 || txt.compare(".") == 0)
+                continue;
+            txtNumber++;
+        }
+    }
+
+    this->buff->reset();
+    this->buff->setTxtNumber(txtNumber);
+    cout << "txtNumber:" << txtNumber << endl;
+
+    if (input)
+    {
+        while ((dir = readdir(input)) != NULL)
+        {
+            string txt = dir->d_name;
+            if (txt.compare("..") == 0 || txt.compare(".") == 0)
+                continue;
+            cout << "attempt " << dirArg + "/" + txt << endl;
+            this->buff->put(dirArg + "/" + txt);
+            this->buff->singalEmpty();
+        }
+    }
+
+    this->buff->finishedParsing();
+    cout << "Threads done parsing txt's" << endl;
+}
 
 // void monitorServer::makeLogFile() {
 //     int pid = getpid();
@@ -163,8 +203,6 @@ monitorServer::~monitorServer() {}
 //     logfile << "REJECTED " << this->f << endl;
 //     logfile.close();
 // }
-
-monitorServer::monitorServer() {}
 
 void monitorServer::start(int p, int t, int sb, int cb, int bloom, char** paths, int numPaths) {
     cout << "Monitor port=" << p << ", threads=" << t << ", sb=" << sb << ", cb=" << cb << ", bloom=" << bloom << endl;
@@ -263,12 +301,13 @@ void monitorServer::openThreads() {
     for (int i = 0; i < this->numThreads; i++) {
         int* t_id = new int();
         *t_id = i;
+        cout << "creating thread " << i << " " << *t_id << endl;
         if (pthread_create(&threads[i], nullptr, threadFunc, t_id) != 0) {
             perror("create thread");
             exit(-1);
         }
     }
-
+    int txtNumber = 0;
     for (int i = 0; i < this->argNumPaths; i++) {
         string dirArg(this->argPaths[i]);
         cout << "Directory: " << dirArg << endl;
@@ -283,20 +322,50 @@ void monitorServer::openThreads() {
                 string txt = dir->d_name;
                 if (txt.compare("..") == 0 || txt.compare(".") == 0)
                     continue;
-                cout << "put attempt " << txt << endl;
-                this->buff->put(txt);
+                txtNumber++;
+            }
+        }
+    }
+    cout << "txtNumber:" << txtNumber << endl;
+    this->buff->setTxtNumber(txtNumber);
+    for (int i = 0; i < this->argNumPaths; i++) {
+        string dirArg(this->argPaths[i]);
+        cout << "Directory: " << dirArg << endl;
+        DIR* input;
+        struct dirent* dir;
+        char* in2 = &dirArg[0];
+        input = opendir(in2);
+        if (input)
+        {
+            while ((dir = readdir(input)) != NULL)
+            {
+                string txt = dir->d_name;
+                if (txt.compare("..") == 0 || txt.compare(".") == 0)
+                    continue;
+                this->buff->put(dirArg + "/" + txt);
                 this->buff->singalEmpty();
             }
         }
     }
-    this->buff->waitTillEmpty();
+    this->buff->finishedParsing();
+    cout << "Threads done parsing txt's" << endl;
+}
 
+monitorServer::monitorServer() {}
+
+monitorServer::~monitorServer() {
+    cout << this->id << " destructor" << endl;
+    for (int i = 0; i < this->numThreads; i++) {
+        this->buff->put("");
+        this->buff->singalEmpty();
+    }
     for (int i = 0; i < this->numThreads; i++) {
         cout << "pthread_join " << i << endl;
-        if (pthread_join(threads[i], nullptr) != 0) {
+        if (pthread_join(this->threads[i], nullptr) != 0) {
             perror("join thread");
             exit(-1);
         }
+        cout << "joined " << i << endl;
     }
     pthread_mutex_destroy(&(this->mutex));
 }
@@ -306,11 +375,19 @@ void monitorServer::openPathsByThreads(int id) {
     while (true) {
         string FILE = this->buff->take();
         cout << id << " took " << FILE << endl;
+        if (FILE == "") {
+            cout << "[" << id << "] in if exit" << endl;
+            this->buff->singalFull();
+            pthread_exit(nullptr);
+        }
         this->buff->singalFull();
         if (this->addNewFile(FILE)) {
             this->addFromFile(FILE);
         }
+        this->buff->increaseParsed();
     }
+    cout << id << " outside while exit" << endl;
+    pthread_exit(nullptr);
 }
 
 void monitorServer::receiveId() {
@@ -319,7 +396,6 @@ void monitorServer::receiveId() {
         cout << "Error in writting sizeOfStr with errno=" << errno << endl;
     this->id = send;
     cout << "Monitor " << this->id << endl;
-    cout << receiveStr() << endl;
 }
 
 void monitorServer::addFromFile(string filepath)
@@ -472,41 +548,38 @@ int monitorServer::checkSyntaxRecord(string errorMessage, int length, string* wo
     return 0;
 }
 
-// void monitorServer::sendBlooms() {
+void monitorServer::sendBlooms() {
+    cout << "monitorServer " << this->id << " sendBlooms" << endl;
+    stringList* temp = this->viruses;
+    while (temp != nullptr) {
+        sendStr(temp->getString());
+        temp = temp->getNext();
+    }
+    int end = -1;
+    if (write(this->sock, &end, sizeof(int)) == -1)
+        cout << "Error in writting end with errno=" << errno << endl;
 
-//     stringList* temp = this->viruses;
-//     while (temp != nullptr) {
-//         sendStr(temp->getString());
-//         temp = temp->getNext();
-//     }
-//     int end = -1;
-//     if (write(writeFD, &end, sizeof(int)) == -1)
-//         cout << "Error in writting end with errno=" << errno << endl;
+    temp = this->viruses;
+    while (temp != nullptr) {
+        bloomFilter* bloomV = this->blooms->getBloom(temp);
+        sendStr(temp->getString());
+        int pos = 0;
+        char* bloomArray = bloomV->getArray();
 
-//     temp = this->viruses;
-//     while (temp != nullptr) {
-//         bloomFilter* bloomV = this->blooms->getBloom(temp);
-//         sendStr(temp->getString());
-//         int pos = 0;
-//         char* bloomArray = bloomV->getArray();
+        for (int i = 0;i <= this->bloomSize / this->socketBufferSize;i++) {
+            if (write(this->sock, &bloomArray[pos], this->socketBufferSize) == -1)
+                cout << "Error in writting i with errno=" << errno << endl;
+            pos += this->socketBufferSize;
+        }
 
-//         for (int i = 0;i <= this->bloomSize / this->socketBufferSize;i++) {
-//             if (write(writeFD, &bloomArray[pos], this->socketBufferSize) == -1)
-//                 cout << "Error in writting i with errno=" << errno << endl;
-//             pos += this->socketBufferSize;
-//         }
+        temp = temp->getNext();
+    }
 
-//         temp = temp->getNext();
-//     }
+    sendStr("END BLOOMS");
+    receiveDone();
+}
 
-//     sendStr("END BLOOMS");
-//     receiveDone();
-// }
-
-// void monitorServer::receiveDone()
-// {
-//     receiveStr();
-// }
+void monitorServer::receiveDone() { receiveStr(); }
 
 void monitorServer::addNewVirus(string virusName)
 {

@@ -192,45 +192,8 @@ void travelMonitorClient::sendIds() {
     for (int i = 0;i < numMonitors;i++) {
         if (write(this->monitors->getSocketFD(i), &i, sizeof(int)) == -1)
             cout << "Error in writting sizeOfStr with errno=" << errno << endl;
-        sendStr(i, "test");
     }
 }
-// void travelMonitorClient::openFifos() {
-//     for (int i = 0;i < numMonitors;i++) {
-//         openFifo(i);
-//     }
-// }
-// void travelMonitorClient::openFifo(int i) {
-
-//     string pipe0 = "pipes/fifo_tW_mR_" + to_string(i);
-//     string pipe1 = "pipes/fifo_tR_mW_" + to_string(i);
-//     int fd0 = open(pipe0.c_str(), O_WRONLY);
-//     int fd1 = open(pipe1.c_str(), O_RDONLY);
-//     // cout << "i=" << i << ",writefd=" << fd0 << ",readfd=" << fd1 << endl;
-//     this->addFdToMonitor(i, fd1, fd0);
-
-// }
-
-// void travelMonitorClient::sendCredentials() {
-//     for (int i = 0;i < numMonitors;i++) {
-//         sendCredential(i);
-//     }
-// }
-
-// void travelMonitorClient::sendCredential(int i) {
-
-//     int fd = this->monitors->getSocketFD(i);
-//     // cout << "sendCredential i=" << i << ",writefd=" << fd << endl;
-//     if (write(fd, &i, sizeof(int)) == -1)
-//         cout << "Error in writting id with errno=" << errno << endl;
-//     if (write(fd, &this->socketBufferSize, sizeof(int)) == -1)
-//         cout << "Error in writting bufferSize with errno=" << errno << endl;
-//     if (write(fd, &this->sizeOfBloom, sizeof(int)) == -1)
-//         cout << "Error in writting sizeOfBloom with errno=" << errno << endl;
-
-//     sendStr(i, this->input_dir);
-
-// }
 
 void travelMonitorClient::receiveBlooms() {
     fd_set fileDecriptorSet;
@@ -263,6 +226,7 @@ void travelMonitorClient::receiveBlooms() {
 }
 
 void travelMonitorClient::receiveBlooms(int i) {
+    cout << "travelMonitorClient receiveBlooms" << endl;
     int end = 0;
     while (1) {
         string virus = receiveManyStr(i, &end);
@@ -294,8 +258,8 @@ void travelMonitorClient::receiveBlooms(int i) {
 
             pos += this->socketBufferSize;
         }
-        // cout << virus << " ";
-        // this->blooms->getBloom(this->viruses->search(virus))->print();
+        cout << virus << " ";
+        this->blooms->getBloom(this->viruses->search(virus))->print();
     }
 }
 
@@ -308,8 +272,6 @@ void travelMonitorClient::startMenu() {
     while (1)
     {
         string input = getInput("Enter command: ");
-        // int pid = this->monitors->getPID(1);
-        // kill(pid, SIGUSR1);
         int length;
         this->command = readString(input, &length);
         if (length > 0)
@@ -335,7 +297,6 @@ void travelMonitorClient::startMenu() {
         delete[] command;
     }
 }
-
 
 void travelMonitorClient::travelRequest(string* arguments, int length) {
     cout << endl;
@@ -533,8 +494,7 @@ void travelMonitorClient::addVaccinationRecords(string* arguments, int length) {
         string country = arguments[1];
         cout << "- country: " << country << endl;
         if (this->countryToMonitor->search(country) != nullptr) {
-            // sendStr(this->countryToMonitor->search(country)->getMonitor(), "break");
-            // this->sendSIGUSR1(this->countryToMonitor->search(country)->getMonitor());
+            sendStr(countryToMonitor->search(country)->getMonitor(), "/addVaccinationRecords " + this->input_dir + country);
             mainMonitor.receiveBlooms(this->countryToMonitor->search(country)->getMonitor());
             mainMonitor.sendStr(this->countryToMonitor->search(country)->getMonitor(), "DONE");
         }

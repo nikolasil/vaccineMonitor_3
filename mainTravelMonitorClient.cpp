@@ -25,14 +25,11 @@ int main(int argc, char* argv[])
     mainMonitor.createServers();
     mainMonitor.openSockets();
     mainMonitor.sendIds();
-    // mainMonitor.openFifos();
-    // mainMonitor.sendCredentials();
-    // mainMonitor.sendCountries();
-    // mainMonitor.receiveBlooms();
-    // mainMonitor.printAllViruses();
-    // while (1) {
-    //     mainMonitor.startMenu();
-    // }
+    mainMonitor.receiveBlooms();
+    mainMonitor.printAllViruses();
+    while (1) {
+        mainMonitor.startMenu();
+    }
     cout << "t end" << endl;
     // return 0;
 }
