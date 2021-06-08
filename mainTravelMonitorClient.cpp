@@ -26,10 +26,8 @@ int main(int argc, char* argv[])
     mainMonitor.openSockets();
     mainMonitor.sendIds();
     mainMonitor.receiveBlooms();
-    mainMonitor.printAllViruses();
     while (1) {
         mainMonitor.startMenu();
     }
-    cout << "t end" << endl;
     // return 0;
 }

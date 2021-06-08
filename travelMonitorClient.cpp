@@ -22,6 +22,8 @@
 #include "DataStructures/bloomFilter/bloomFilter.h"
 #include "DataStructures/date/date.h"
 
+#define portNumber 7777
+
 using namespace std;
 
 travelMonitorClient mainMonitor = travelMonitorClient();
@@ -117,7 +119,7 @@ void travelMonitorClient::createServer(int i) {
         // sleep(2);
     }
     else {
-        int port = 7777 + i;
+        int port = portNumber + i;
         string files = "";
         files.append("-p " + to_string(port));
         files.append(" -t " + to_string(this->numThreads));
@@ -147,7 +149,6 @@ void travelMonitorClient::createServer(int i) {
 }
 
 void travelMonitorClient::openSockets() {
-    cout << "openSockets" << endl;
     if (gethostname(this->machineName, sizeof(this->machineName)) == -1) {
         perror("gethostname");
         exit(1);
@@ -162,7 +163,7 @@ void travelMonitorClient::openSockets() {
     cout << "externalAddress " << this->externalAddress << endl;
 
     for (int i = 0;i < numMonitors;i++) {
-        int port = 7777 + i;
+        int port = portNumber + i;
         int sock;
         if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             perror("travelMonitorClient error opening socket");
@@ -258,8 +259,8 @@ void travelMonitorClient::receiveBlooms(int i) {
 
             pos += this->socketBufferSize;
         }
-        cout << virus << " ";
-        this->blooms->getBloom(this->viruses->search(virus))->print();
+        // cout << virus << " ";
+        // this->blooms->getBloom(this->viruses->search(virus))->print();
     }
 }
 
@@ -294,7 +295,7 @@ void travelMonitorClient::startMenu() {
                     string res = receiveStr(i);
                     cout << "Monitor " << i << res << endl;
                 }
-                exit(1);
+                this->suicide();
             }
             else
                 cout << "Invalid command!" << endl;

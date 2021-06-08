@@ -31,25 +31,27 @@ using namespace std;
 
 monitorServer monitor = monitorServer();
 
-// void monitorServer::suicide() {
-//     if (this->tree != nullptr)
-//         delete this->tree;
-//     if (this->skipLists != nullptr)
-//         delete this->skipLists;
-//     if (this->blooms != nullptr)
-//         delete this->blooms;
-//     if (this->viruses != nullptr)
-//         delete this->viruses;
-//     if (this->countries != nullptr)
-//         delete this->countries;
-//     if (this->filesReaded != nullptr)
-//         delete this->filesReaded;
-//     if (this->command != nullptr)
-//         delete[] this->command;
+void monitorServer::suicide() {
+    if (this->tree != nullptr)
+        delete this->tree;
+    if (this->skipLists != nullptr)
+        delete this->skipLists;
+    if (this->blooms != nullptr)
+        delete this->blooms;
+    if (this->viruses != nullptr)
+        delete this->viruses;
+    if (this->countries != nullptr)
+        delete this->countries;
+    if (this->filesReaded != nullptr)
+        delete this->filesReaded;
+    if (this->command != nullptr)
+        delete[] this->command;
+    if (this->buff != nullptr)
+        delete this->buff;
 
-//     cout << "monitorServer " << getpid() << " Terminated" << endl;
-//     exit(1);
-// }
+    cout << "monitorServer " << getpid() << " Terminated" << endl;
+    exit(1);
+}
 
 void monitorServer::waitForCommands() {
     while (1)
@@ -70,8 +72,23 @@ void monitorServer::waitForCommands() {
                 this->addVaccinationRecords(command, length);
 
             else if (command[0].compare("/exit") == 0) {
+                // cout << this->id << " destructor" << endl;
+                for (int i = 0; i < this->numThreads; i++) {
+                    this->buff->put("");
+                    this->buff->singalEmpty();
+                }
+                for (int i = 0; i < this->numThreads; i++) {
+                    // cout << "pthread_join " << i << endl;
+                    if (pthread_join(this->threads[i], nullptr) != 0) {
+                        perror("join thread");
+                        exit(-1);
+                    }
+                    // cout << "joined " << i << endl;
+                }
+                pthread_mutex_destroy(&(this->mutex));
                 this->makeLogFile();
                 sendStr(" closed succefully");
+                this->suicide();
                 exit(1);
             }
             else
@@ -176,7 +193,7 @@ void monitorServer::addVaccinationRecords(string* arguments, int length) {
 
     this->buff->reset();
     this->buff->setTxtNumber(txtNumber);
-    cout << "txtNumber:" << txtNumber << endl;
+    // cout << "txtNumber:" << txtNumber << endl;
 
     DIR* input2;
     struct dirent* dir2;
@@ -323,7 +340,7 @@ void monitorServer::openThreads() {
     int txtNumber = 0;
     for (int i = 0; i < this->argNumPaths; i++) {
         string dirArg(this->argPaths[i]);
-        cout << "Directory: " << dirArg << endl;
+        // cout << "Directory: " << dirArg << endl;
         DIR* input;
         struct dirent* dir;
         char* in2 = &dirArg[0];
@@ -339,11 +356,11 @@ void monitorServer::openThreads() {
             }
         }
     }
-    cout << "txtNumber:" << txtNumber << endl;
+    // cout << "txtNumber:" << txtNumber << endl;
     this->buff->setTxtNumber(txtNumber);
     for (int i = 0; i < this->argNumPaths; i++) {
         string dirArg(this->argPaths[i]);
-        cout << "Directory: " << dirArg << endl;
+        // cout << "Directory: " << dirArg << endl;
         DIR* input;
         struct dirent* dir;
         char* in2 = &dirArg[0];
@@ -370,20 +387,7 @@ void monitorServer::openThreads() {
 monitorServer::monitorServer() {}
 
 monitorServer::~monitorServer() {
-    cout << this->id << " destructor" << endl;
-    for (int i = 0; i < this->numThreads; i++) {
-        this->buff->put("");
-        this->buff->singalEmpty();
-    }
-    for (int i = 0; i < this->numThreads; i++) {
-        cout << "pthread_join " << i << endl;
-        if (pthread_join(this->threads[i], nullptr) != 0) {
-            perror("join thread");
-            exit(-1);
-        }
-        cout << "joined " << i << endl;
-    }
-    pthread_mutex_destroy(&(this->mutex));
+
 }
 
 
@@ -392,7 +396,7 @@ void monitorServer::openPathsByThreads(int id) {
         string FILE = this->buff->take();
         cout << id << " took " << FILE << endl;
         if (FILE == "") {
-            cout << "[" << id << "] in if exit" << endl;
+            // cout << "[" << id << "] in if exit" << endl;
             this->buff->singalFull();
             pthread_exit(nullptr);
         }
@@ -400,7 +404,7 @@ void monitorServer::openPathsByThreads(int id) {
         this->addFromFile(FILE);
         this->buff->increaseParsed();
     }
-    cout << id << " outside while exit" << endl;
+    // cout << id << " outside while exit" << endl;
     pthread_exit(nullptr);
 }
 
@@ -617,13 +621,13 @@ int monitorServer::addNewFile(string file)
 {
     if (this->filesReaded->search(file) == nullptr) // if we dont have that country add it to the list of Countries
     {
-        cout << "-1-" << file << endl;
+        // cout << "-1-" << file << endl;
         pthread_mutex_lock(&(this->mutex));
         this->filesReaded = this->filesReaded->add(file);
         pthread_mutex_unlock(&(this->mutex));
         return 1;
     }
-    cout << "-2-" << file << endl;
+    // cout << "-2-" << file << endl;
     return 0;
 }
 

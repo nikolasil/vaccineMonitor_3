@@ -24,6 +24,5 @@ int main(int argc, char* argv[])
     while (1) {
         monitor.waitForCommands();
     }
-    cout << "m end" << endl;
     return 0;
 }

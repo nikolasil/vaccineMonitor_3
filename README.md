@@ -1,121 +1,132 @@
 # Nikolas Iliopoulos 1115201800332
-## 2 Exercise System Programming
+## 3 Exercise System Programming
 
 ### **Compile & Run**
 
 Makefile is included. Use the command **make** to compile the source code.
 
-To run the application use: **./travelMonitor -m inputFile.txt -b bufferSize -s sizeOfBloom -i input_dir**
+To run the application use: **./travelMonitorClient -m numMonitor -b bufferSize -c cyclicBufferSize -s sizeOfBloom -i input_dir -t numThreads**
 
 > *Note* that the order of the arguments doesn't matter.
 
 ---
 
-### **Error Handling & Checking**
-
-- Syntax of Records
-  - The line must have 7 or 8 words
-  - id is only numbers
-  - 0 <= id <= 9999
-  - age is only numbers
-  - 1 <= age <= 120
-  - 7 word must be either YES or NO
-  - If there are 7 words total the seventh word must be NO
-  - If there are 8 words total the seventh word must be YES
-  - The date if exists must have the format dd-mm-yyyy
-  - 1 <= dd <= 30 & 1 <= mm <= 12 & 1950 <= yyyy <= 2050
-
-- Bad dupicates
-  - Citizens with same id must match the credentials firstname lastname country age in order to be a valid duplicate of that citizen
-  - Citizens that have valid credentials must also have a different virus name that the already inserted citizen has.
+Everything is the same with exercise 2 but instead of pipes there are networking sockets and the servers process the records with threads.
 
 ---
 
-### General
+### **General**
 
-- The first thing i send to the Monitor is some usefull things such us his unique id, bufferSize, sizeofbloom, input_dir.
-
-- I have functions sendStr() and receiveStr(). That reads and writes ftom the correct pipe.
-
-- At the start of sending a string from the pipe. I firstly send the length of the string and then the string in parts based on the bufferSize.
-Then the receiver will know the length of the string that will come and in how many parts it will be send. Then it takes those strings parts and concatenate them.
-
-- In order to know when i have to stop reading strings i made the convension when the length of the string is -1 it means i have to stop.
-
-- To catch the signals i used sigaction()
 
 
 ---
+
+
 
 ### **Structure & Classes**
 
-**I used all the structures from the exercise 1 that i made**
+**I used all the structures from the exercise 1 & 2 that i made**
 
 #### travelMonitor
 ```cpp
-class travelMonitor {
+class travelMonitorClient {
 public:
     // Methods
 private:
-    // the arguments
+    struct hostent* ip;
+    struct in_addr** ip_addr;
+
+    struct sockaddr_in client;
+    struct sockaddr* clientptr;
+
+    char machineName[256];
+    char externalAddress[256];
+
+    string* command;
     int numMonitors;
-    int bufferSize;
+    int socketBufferSize;
+    int cyclicBufferSize;
     int sizeOfBloom;
     string input_dir;
+    int numThreads;
 
-    struct sigaction handlerSIGINT_SIGQUIT; // to catch SIGINT & SIGQUIT
-    struct sigaction handlerSIGCHLD; // to catch SIGCHLD
-    string* command; // used for storing the command from the cin
-    
-    monitorList* monitors; // a list that is storing information
-    // about each monitor [readFD, writeFD, pid, id]
+    monitorList* monitors;
+    monitorCountryPairList* countryToMonitor;
 
-    monitorCountryPairList* countryToMonitor; // a list that is storing
-    // the countries of each monitor
-
-    stringList* viruses; // ALL the viruses
-    stringList* countries; // ALL the countries
-    bloomFilterList* blooms; // ALL the blooms
-    statsList* requests; // i store every request here
-    // so i can make the statistics
+    stringList* viruses;
+    statsList* requests;
+    stringList* filePaths;
+    stringList* countries;
+    bloomFilterList* blooms;
 };
 ```
 
-#### Monitor
+#### MonitorServer
 
 ```cpp
-class Monitor {
+class monitorServer {
 public:
     // Methods
 private:
-    int id; // the unique id of each monitor
-    // this is the first thing that they will receive from the pipe
-    
-    // the Arguments
-    int bufferSize;
-    int bloomSize;
+    struct hostent* ip;
+    struct in_addr** ip_addr;
+
+    struct sockaddr_in server;
+    struct sockaddr* serverptr;
+
+    char machineName[256];
+    char externalAddress[256];
+
+    pthread_mutex_t mutex;
+    cyclicBuffer* buff;
+    pthread_t* threads;
+
+    int id;
+    int port;
+    int sock;
+    int numThreads;
+    string* command;
+    int t;
+    int f;
     string generalDirectory;
 
-    struct sigaction handlerSIGINT_SIGQUIT;  // to catch SIGINT & SIGQUIT
-    struct sigaction handlerSIGUSR1; // to catch SIGUSR1
+    char** argPaths;
+    int argNumPaths;
 
-    int t; // a count of the accepted
-    int f; // a count of the rejected
+    int socketBufferSize;
+    int cyclicBufferSize;
+    int bloomSize;
 
-    // for named pipes FIFOs
-    string readFifo;
-    int readFD;
-    string writeFifo;
-    int writeFD;
+    treeNode* tree;
+    bloomFilterList* blooms;
+    skipList_List* skipLists;
+    stringList* viruses;
+    stringList* countries;
+    stringList* filesReaded;
+};
+```
 
-    string* command; // used for storing the command from the cin
+#### cyclicBuffer
 
-    treeNode* tree; //  a binary tree of the citizens
-    bloomFilterList* blooms; // a list of the blooms
-    skipList_List* skipLists; // a list of the 2 skiplists
-    stringList* viruses; // a lsit of viruses
-    stringList* countries; // a list of countries
-    stringList* filesReaded; // a list of the files that are already processed
+I took the implementation from the lectures.
+
+```cpp
+class cyclicBuffer {
+public:
+    string take();
+    void put(string txt);
+private:
+    string* buff; // the buffer where the txt will be hold
+    int start; // the position of the first txt
+    int end; // the position of the last txt
+    int count;// how many txts are in the buffer
+    int size; // the size of the buffer
+    int txtNumber; // the total txt that the travelMonitorCilent wants to insert
+    int txtParsed; // how many txt are fully parsed
+
+    pthread_mutex_t mtx; // the mutex that is used in the take and put
+    pthread_cond_t cond_nonempty;// condition variable that stops the put() to insert a txt if there is no space
+    pthread_cond_t cond_nonfull;// condition variable that stops the take() to remove a txt if there is no txt in the buffer
 };
 ```
 
@@ -190,20 +201,13 @@ I check every request that i have in the request list and abjust two counts acco
 
 #### /addVaccinationRecords
 
-I send a signal SIGUSR1 to the correct Monitor.
-The monitor cathes it and loops throw all the files. And if the file is not in the files list it means that it is a new file. So i update that structures with this file and continue searching for other files.
+Just send the command to the correct monitor.
+The monitor cathes it and loops throw all the files and put the not processed files to the cyclic buffer in the same way as before.
+Then the threads take te files and update the structures.
+Then all the bloomfilters are send back to the travelMonitorClient.
 
 #### /searchVaccinationStatus
 
 - Send to the Monitors the command
 - if the monitor does not have the citizen send me -1 if it has returns 1.
 - Then i read from the monitor that sends me 1 and print the things that it sends me.
-
-### **Script**
-
-The script is in the **script\create_infiles.sh**.
-
-The script uses array to store the countries.
-At first i create the directories with the all files.
-Then i start from the start of the inputFile and for each record i go to the spesific directory and put the record.
-In order to know in which txt i have to put the record i have an associated array and for each country i store and int that corresponds to the txt that the next record will go.
