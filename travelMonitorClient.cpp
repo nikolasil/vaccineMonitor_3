@@ -289,7 +289,12 @@ void travelMonitorClient::startMenu() {
                 this->searchVaccinationStatus(command, length);
 
             else if (command[0].compare("/exit") == 0) {
-                kill(getpid(), SIGINT);
+                for (int i = 0;i < this->numMonitors;i++) {
+                    sendStr(i, "/exit");
+                    string res = receiveStr(i);
+                    cout << "Monitor " << i << res << endl;
+                }
+                exit(1);
             }
             else
                 cout << "Invalid command!" << endl;
