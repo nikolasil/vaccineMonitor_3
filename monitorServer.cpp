@@ -173,21 +173,29 @@ void monitorServer::addVaccinationRecords(string* arguments, int length) {
     this->buff->setTxtNumber(txtNumber);
     cout << "txtNumber:" << txtNumber << endl;
 
-    if (input)
+    DIR* input2;
+    struct dirent* dir2;
+    char* in22 = &dirArg[0];
+    input2 = opendir(in22);
+    if (input2)
     {
-        while ((dir = readdir(input)) != NULL)
+        while ((dir2 = readdir(input2)) != NULL)
         {
-            string txt = dir->d_name;
+            string txt = dir2->d_name;
             if (txt.compare("..") == 0 || txt.compare(".") == 0)
                 continue;
-            cout << "attempt " << dirArg + "/" + txt << endl;
-            this->buff->put(dirArg + "/" + txt);
-            this->buff->singalEmpty();
+            if (addNewFile(dirArg + "/" + txt)) {
+                this->buff->put(dirArg + "/" + txt);
+                this->buff->singalEmpty();
+            }
+            else {
+                this->buff->increaseParsed();
+            }
         }
     }
-
     this->buff->finishedParsing();
     cout << "Threads done parsing txt's" << endl;
+    this->sendBlooms();
 }
 
 // void monitorServer::makeLogFile() {
@@ -342,8 +350,11 @@ void monitorServer::openThreads() {
                 string txt = dir->d_name;
                 if (txt.compare("..") == 0 || txt.compare(".") == 0)
                     continue;
-                this->buff->put(dirArg + "/" + txt);
-                this->buff->singalEmpty();
+
+                if (addNewFile(dirArg + "/" + txt)) {
+                    this->buff->put(dirArg + "/" + txt);
+                    this->buff->singalEmpty();
+                }
             }
         }
     }
@@ -381,9 +392,7 @@ void monitorServer::openPathsByThreads(int id) {
             pthread_exit(nullptr);
         }
         this->buff->singalFull();
-        if (this->addNewFile(FILE)) {
-            this->addFromFile(FILE);
-        }
+        this->addFromFile(FILE);
         this->buff->increaseParsed();
     }
     cout << id << " outside while exit" << endl;
@@ -603,11 +612,13 @@ int monitorServer::addNewFile(string file)
 {
     if (this->filesReaded->search(file) == nullptr) // if we dont have that country add it to the list of Countries
     {
+        cout << "-1-" << file << endl;
         pthread_mutex_lock(&(this->mutex));
         this->filesReaded = this->filesReaded->add(file);
         pthread_mutex_unlock(&(this->mutex));
         return 1;
     }
+    cout << "-2-" << file << endl;
     return 0;
 }
 
