@@ -63,12 +63,17 @@ void monitorServer::waitForCommands() {
             if (command[0].compare("/travelRequest") == 0)
                 this->travelRequest(command, length);
 
-            if (command[0].compare("/searchVaccinationStatus") == 0)
+            else if (command[0].compare("/searchVaccinationStatus") == 0)
                 this->searchVaccinationStatus(command, length);
 
-            if (command[0].compare("/addVaccinationRecords") == 0)
+            else if (command[0].compare("/addVaccinationRecords") == 0)
                 this->addVaccinationRecords(command, length);
 
+            else if (command[0].compare("/exit") == 0) {
+                this->makeLogFile();
+                sendStr(" closed succefully");
+                exit(1);
+            }
             else
                 cout << "Invalid command!" << endl;
         }
@@ -198,19 +203,19 @@ void monitorServer::addVaccinationRecords(string* arguments, int length) {
     this->sendBlooms();
 }
 
-// void monitorServer::makeLogFile() {
-//     int pid = getpid();
-//     ofstream logfile("logfiles/log_file." + to_string(pid));
-//     stringList* temp = this->countries;
-//     while (temp != nullptr) {
-//         logfile << temp->getString() << endl;
-//         temp = temp->getNext();
-//     }
-//     logfile << "TOTAL TRAVEL REQUESTS " << this->t + this->f << endl;
-//     logfile << "ACCEPTED " << this->t << endl;
-//     logfile << "REJECTED " << this->f << endl;
-//     logfile.close();
-// }
+void monitorServer::makeLogFile() {
+    int pid = getpid();
+    ofstream logfile("logfiles/log_file." + to_string(pid));
+    stringList* temp = this->countries;
+    while (temp != nullptr) {
+        logfile << temp->getString() << endl;
+        temp = temp->getNext();
+    }
+    logfile << "TOTAL TRAVEL REQUESTS " << this->t + this->f << endl;
+    logfile << "ACCEPTED " << this->t << endl;
+    logfile << "REJECTED " << this->f << endl;
+    logfile.close();
+}
 
 void monitorServer::start(int p, int t, int sb, int cb, int bloom, char** paths, int numPaths) {
     cout << "Monitor port=" << p << ", threads=" << t << ", sb=" << sb << ", cb=" << cb << ", bloom=" << bloom << endl;
