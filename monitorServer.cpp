@@ -410,7 +410,7 @@ void monitorServer::openPathsByThreads(int id) {
 
 void monitorServer::receiveId() {
     int send;
-    if (read(this->sock, &send, sizeof(int)) == -1)
+    if (recv(this->sock, &send, sizeof(int), MSG_WAITALL) == -1)
         cout << "Error in writting sizeOfStr with errno=" << errno << endl;
     this->id = send;
     cout << "Monitor " << this->id << endl;
@@ -592,7 +592,7 @@ void monitorServer::sendBlooms() {
 
         temp = temp->getNext();
     }
-
+    cout << "end" << endl;
     sendStr("END BLOOMS");
     receiveDone();
 }
@@ -637,46 +637,46 @@ void monitorServer::sendStr(string str) {
 
     if (write(this->sock, &sizeOfStr, sizeof(int)) == -1)
         if (errno != 4)
-            cout << "Error in writting sizeOfStr with errno=" << errno << endl;
+            perror("Error in writting sizeOfStr with errno=");
 
     if (sizeOfStr > this->socketBufferSize) {
         int pos = 0;
         for (int i = 0;i <= strlen(to_tranfer) / this->socketBufferSize;i++) {
             if (write(this->sock, &to_tranfer[pos], this->socketBufferSize) == -1)
                 if (errno != 4)
-                    cout << "Error in writting to_tranfer with errno=" << errno << endl;
+                    perror("Error in writting to_tranfer with errno=");
             pos += this->socketBufferSize;
         }
     }
     else
         if (write(this->sock, &to_tranfer[0], sizeOfStr) == -1)
             if (errno != 4)
-                cout << "Error in writting to_tranfer with errno=" << errno << endl;
+                perror("Error in writting to_tranfer with errno=");
 
 }
 
 string monitorServer::receiveStr() {
     int sizeOfStr;
-    if (read(this->sock, &sizeOfStr, sizeof(int)) == -1)
+    if (recv(this->sock, &sizeOfStr, sizeof(int), MSG_WAITALL) == -1)
         if (errno != 4)
-            cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
+            perror("monitorServer WTF error in reading sizeOfStr");
 
     string str = "";
     if (sizeOfStr > this->socketBufferSize) {
         for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
             char buff[this->socketBufferSize + 1];
-            if (read(this->sock, &buff[0], this->socketBufferSize) == -1)
+            if (recv(this->sock, &buff[0], this->socketBufferSize, MSG_WAITALL) == -1)
                 if (errno != 4)
-                    cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
+                    perror("monitorServer error in reading buff");
             buff[this->socketBufferSize] = '\0';
             str.append(buff);
         }
     }
     else {
         char buff[sizeOfStr + 1];
-        if (read(this->sock, &buff[0], sizeOfStr) == -1)
+        if (recv(this->sock, &buff[0], sizeOfStr, MSG_WAITALL) == -1)
             if (errno != 4)
-                cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
+                perror("monitorServer error in reading buff");
         buff[sizeOfStr] = '\0';
         str.append(buff);
     }
@@ -685,9 +685,9 @@ string monitorServer::receiveStr() {
 
 string monitorServer::receiveManyStr(int* end) {
     int sizeOfStr;
-    if (read(this->sock, &sizeOfStr, sizeof(int)) == -1)
+    if (recv(this->sock, &sizeOfStr, sizeof(int), MSG_WAITALL) == -1)
         if (errno != 4)
-            cout << "monitorServer " << this->id << " error in reading sizeOfStr with errno=" << errno << endl;
+            perror("monitorServer error in reading sizeOfStr");
 
     if (sizeOfStr == -1) {
         *end = -1;
@@ -698,18 +698,18 @@ string monitorServer::receiveManyStr(int* end) {
     if (sizeOfStr > this->socketBufferSize) {
         for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
             char buff[this->socketBufferSize + 1];
-            if (read(this->sock, &buff[0], this->socketBufferSize) == -1)
+            if (recv(this->sock, &buff[0], this->socketBufferSize, MSG_WAITALL) == -1)
                 if (errno != 4)
-                    cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
+                    perror("monitorServer error in reading buff");
             buff[this->socketBufferSize] = '\0';
             str.append(buff);
         }
     }
     else {
         char buff[sizeOfStr + 1];
-        if (read(this->sock, &buff[0], sizeOfStr) == -1)
+        if (recv(this->sock, &buff[0], sizeOfStr, MSG_WAITALL) == -1)
             if (errno != 4)
-                cout << "monitorServer " << this->id << " error in reading buff with errno=" << errno << endl;
+                perror("monitorServer error in reading buff");
         buff[sizeOfStr] = '\0';
         // cout << "test " << buff << endl;
         str.append(buff);

@@ -185,6 +185,7 @@ void travelMonitorClient::openSockets() {
             connectStatus = connect(sock, clientptr, clientlen);
         while (connectStatus < 0);
         cout << "connected to monitor " << i << endl;
+        cout << "fd " << sock << endl;
         this->addFdToMonitor(i, sock);
     }
 }
@@ -251,7 +252,7 @@ void travelMonitorClient::receiveBlooms(int i) {
         char* bloomArray = this->blooms->getBloom(this->viruses->search(virus))->getArray();
         for (int i = 0;i <= this->sizeOfBloom / this->socketBufferSize;i++) {
             char buff[this->socketBufferSize];
-            if (read(fd, &buff, this->socketBufferSize) == -1)
+            if (recv(fd, &buff, this->socketBufferSize, MSG_WAITALL) == -1)
                 cout << "Error in reading bit with errno=" << errno << endl;
 
             for (int i = 0; i < this->socketBufferSize;i++)
@@ -528,7 +529,7 @@ void travelMonitorClient::searchVaccinationStatus(string* arguments, int length)
         int monitor = -1;
         int buff;
         for (int i = 0;i < this->numMonitors;i++) {
-            if (read(this->monitors->getSocketFD(i), &buff, sizeof(int)) == -1)
+            if (recv(this->monitors->getSocketFD(i), &buff, sizeof(int), MSG_WAITALL) == -1)
                 if (errno != 4)
                     cout << "Error in reading sizeOfStr with errno=" << errno << endl;
             if (buff == 1) {
@@ -554,6 +555,7 @@ void travelMonitorClient::searchVaccinationStatus(string* arguments, int length)
 }
 
 void travelMonitorClient::sendStr(int monitor, string str) {
+    cout << "sendStr " << str << endl;
     int fd = this->monitors->getSocketFD(monitor);
     char* to_tranfer = &str[0];
     int sizeOfStr = strlen(to_tranfer);
@@ -581,27 +583,30 @@ void travelMonitorClient::sendStr(int monitor, string str) {
 
 string travelMonitorClient::receiveStr(int monitor) {
     int fd = this->monitors->getSocketFD(monitor);
+    cout << "fd=" << fd << endl;
     int sizeOfStr;
-    if (read(fd, &sizeOfStr, sizeof(int)) == -1)
+    if (recv(fd, &sizeOfStr, sizeof(int), MSG_WAITALL) == -1)
         if (errno != 4)
-            cout << "Error in reading sizeOfStr with errno=" << errno << endl;
+            cout << "receiveStrError in reading sizeOfStr with errno=" << errno << endl;
 
     string str = "";
     if (sizeOfStr > this->socketBufferSize) {
         for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
             char buff[this->socketBufferSize + 1];
-            if (read(fd, &buff[0], this->socketBufferSize) == -1)
+
+            if (recv(fd, &buff[0], this->socketBufferSize, MSG_WAITALL) == -1)
                 if (errno != 4)
-                    cout << "Error in reading buff with errno=" << errno << endl;
+                    cout << "receiveStrError in reading buff with errno=" << errno << " " << fd << endl;
             buff[this->socketBufferSize] = '\0';
             str.append(buff);
         }
     }
     else {
         char buff[sizeOfStr + 1];
-        if (read(fd, &buff[0], sizeOfStr) == -1)
+        if (recv(fd, &buff[0], sizeOfStr, MSG_WAITALL) == -1)
             if (errno != 4)
-                cout << "Error in reading buff with errno=" << errno << endl;
+                // cout << "receiveStrError in reading buff with errno=" << errno << " " << fd << endl;
+                perror("receiveStrError in reading buff with errno=");
         buff[sizeOfStr] = '\0';
         str.append(buff);
     }
@@ -611,9 +616,9 @@ string travelMonitorClient::receiveStr(int monitor) {
 string travelMonitorClient::receiveManyStr(int monitor, int* end) {
     int fd = this->monitors->getSocketFD(monitor);
     int sizeOfStr;
-    if (read(fd, &sizeOfStr, sizeof(int)) == -1)
+    if (recv(fd, &sizeOfStr, sizeof(int), MSG_WAITALL) == -1)
         if (errno != 4)
-            cout << "Error in reading sizeOfStr with errno=" << errno << endl;
+            cout << "receiveManyStrError in reading sizeOfStr with errno=" << errno << endl;
 
     if (sizeOfStr == -1) {
         *end = -1;
@@ -624,18 +629,18 @@ string travelMonitorClient::receiveManyStr(int monitor, int* end) {
     if (sizeOfStr > this->socketBufferSize) {
         for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
             char buff[this->socketBufferSize + 1];
-            if (read(fd, &buff[0], this->socketBufferSize) == -1)
+            if (recv(fd, &buff[0], this->socketBufferSize, MSG_WAITALL) == -1)
                 if (errno != 4)
-                    cout << "Error in reading buff with errno=" << errno << endl;
+                    cout << "receiveManyStrError in reading buff with errno=" << errno << endl;
             buff[this->socketBufferSize] = '\0';
             str.append(buff);
         }
     }
     else {
         char buff[sizeOfStr + 1];
-        if (read(fd, &buff[0], sizeOfStr) == -1)
+        if (recv(fd, &buff[0], sizeOfStr, MSG_WAITALL) == -1)
             if (errno != 4)
-                cout << "Error in reading buff with errno=" << errno << endl;
+                cout << "receiveManyStrError in reading buff with errno=" << errno << endl;
         buff[sizeOfStr] = '\0';
         str.append(buff);
     }
