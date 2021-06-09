@@ -133,7 +133,7 @@ void monitorServer::searchVaccinationStatus(string* arguments, int length) {
     treeNode* citizen = this->tree->search(this->tree, id);
     if (citizen != nullptr) {
         int end = 1;
-        if (write(this->sock, &end, sizeof(int)) == -1)
+        if (send(this->sock, &end, sizeof(int), 0) == -1)
             if (errno != 4)
                 cout << "Error in writting to_tranfer with errno=" << errno << endl;
         string credentials = arguments[1] + " " + citizen->getCitizen()->getFirstName();
@@ -160,13 +160,13 @@ void monitorServer::searchVaccinationStatus(string* arguments, int length) {
             status = status->getNext();
         }
         end = -1;
-        if (write(this->sock, &end, sizeof(int)) == -1)
+        if (send(this->sock, &end, sizeof(int), 0) == -1)
             if (errno != 4)
                 cout << "Error in writting to_tranfer with errno=" << errno << endl;
     }
     else {
         int end = -1;
-        if (write(this->sock, &end, sizeof(int)) == -1)
+        if (send(this->sock, &end, sizeof(int), 0) == -1)
             if (errno != 4)
                 cout << "Error in writting to_tranfer with errno=" << errno << endl;
     }
@@ -571,21 +571,28 @@ void monitorServer::sendBlooms() {
     stringList* temp = this->viruses;
     while (temp != nullptr) {
         sendStr(temp->getString());
+        cout << "m " << temp->getString() << endl;
         temp = temp->getNext();
     }
     int end = -1;
-    if (write(this->sock, &end, sizeof(int)) == -1)
+    if (send(this->sock, &end, sizeof(int), 0) == -1)
         cout << "Error in writting end with errno=" << errno << endl;
 
     temp = this->viruses;
     while (temp != nullptr) {
         bloomFilter* bloomV = this->blooms->getBloom(temp);
+        cout << "sedning bloom v " << temp->getString() << endl;
         sendStr(temp->getString());
         int pos = 0;
         char* bloomArray = bloomV->getArray();
 
         for (int i = 0;i <= this->bloomSize / this->socketBufferSize;i++) {
-            if (write(this->sock, &bloomArray[pos], this->socketBufferSize) == -1)
+            if (i == this->bloomSize / this->socketBufferSize) {
+                if (send(this->sock, &bloomArray[pos], this->bloomSize - pos, 0) == -1)
+                    cout << "Error in writting i with errno=" << errno << endl;
+                break;
+            }
+            if (send(this->sock, &bloomArray[pos], this->socketBufferSize, 0) == -1)
                 cout << "Error in writting i with errno=" << errno << endl;
             pos += this->socketBufferSize;
         }
@@ -635,21 +642,21 @@ void monitorServer::sendStr(string str) {
     char* to_tranfer = &str[0];
     int sizeOfStr = strlen(to_tranfer);
 
-    if (write(this->sock, &sizeOfStr, sizeof(int)) == -1)
+    if (send(this->sock, &sizeOfStr, sizeof(int), 0) == -1)
         if (errno != 4)
             perror("Error in writting sizeOfStr with errno=");
 
     if (sizeOfStr > this->socketBufferSize) {
         int pos = 0;
         for (int i = 0;i <= strlen(to_tranfer) / this->socketBufferSize;i++) {
-            if (write(this->sock, &to_tranfer[pos], this->socketBufferSize) == -1)
+            if (send(this->sock, &to_tranfer[pos], this->socketBufferSize, 0) == -1)
                 if (errno != 4)
                     perror("Error in writting to_tranfer with errno=");
             pos += this->socketBufferSize;
         }
     }
     else
-        if (write(this->sock, &to_tranfer[0], sizeOfStr) == -1)
+        if (send(this->sock, &to_tranfer[0], sizeOfStr, 0) == -1)
             if (errno != 4)
                 perror("Error in writting to_tranfer with errno=");
 

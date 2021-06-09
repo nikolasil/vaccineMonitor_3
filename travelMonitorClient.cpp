@@ -196,7 +196,7 @@ void travelMonitorClient::openSockets() {
 
 void travelMonitorClient::sendIds() {
     for (int i = 0;i < numMonitors;i++) {
-        if (write(this->monitors->getSocketFD(i), &i, sizeof(int)) == -1)
+        if (send(this->monitors->getSocketFD(i), &i, sizeof(int), 0) == -1)
             cout << "Error in writting sizeOfStr with errno=" << errno << endl;
     }
 }
@@ -236,9 +236,12 @@ void travelMonitorClient::receiveBlooms(int i) {
     int end = 0;
     while (1) {
         string virus = receiveManyStr(i, &end);
+        cout << virus << endl;
         if (end == -1 || virus == "")
             break;
+        cout << 1 << endl;
         addNewVirus(virus);
+        cout << 2 << endl;
         // cout << "Got virus=" << virus << " from Monitor " << i << endl;
     }
     cout << "Updating blooms from Monitor " << i << endl;
@@ -253,9 +256,18 @@ void travelMonitorClient::receiveBlooms(int i) {
 
         int pos = 0;
         int fd = this->monitors->getSocketFD(i);
+        cout << "testtt " << virus << endl;
         char* bloomArray = this->blooms->getBloom(this->viruses->search(virus))->getArray();
         for (int i = 0;i <= this->sizeOfBloom / this->socketBufferSize;i++) {
             char buff[this->socketBufferSize];
+            if (i == this->sizeOfBloom / this->socketBufferSize) {
+                if (recv(fd, &buff, this->sizeOfBloom - pos, MSG_WAITALL) == -1)
+                    cout << "Error in writting i with errno=" << errno << endl;
+
+                for (int i = 0; i < this->sizeOfBloom - pos;i++)
+                    bloomArray[pos + i] = bloomArray[pos + i] | buff[i];
+                break;
+            }
             if (recv(fd, &buff, this->socketBufferSize, MSG_WAITALL) == -1)
                 cout << "Error in reading bit with errno=" << errno << endl;
 
@@ -564,14 +576,14 @@ void travelMonitorClient::sendStr(int monitor, string str) {
     char* to_tranfer = &str[0];
     int sizeOfStr = strlen(to_tranfer);
 
-    if (write(fd, &sizeOfStr, sizeof(int)) == -1)
+    if (send(fd, &sizeOfStr, sizeof(int), 0) == -1)
         if (errno != 4)
             cout << "Error in writting sizeOfStr with errno=" << errno << endl;
 
     if (sizeOfStr > this->socketBufferSize) {
         int pos = 0;
         for (int i = 0;i <= strlen(to_tranfer) / this->socketBufferSize;i++) {
-            if (write(fd, &to_tranfer[pos], this->socketBufferSize) == -1)
+            if (send(fd, &to_tranfer[pos], this->socketBufferSize, 0) == -1)
                 if (errno != 4)
                     cout << "Error in writting to_tranfer with errno=" << errno << endl;
 
@@ -579,7 +591,7 @@ void travelMonitorClient::sendStr(int monitor, string str) {
         }
     }
     else
-        if (write(fd, &to_tranfer[0], sizeOfStr) == -1)
+        if (send(fd, &to_tranfer[0], sizeOfStr, 0) == -1)
             if (errno != 4)
                 cout << "Error in writting to_tranfer with errno=" << errno << endl;
 
@@ -587,12 +599,11 @@ void travelMonitorClient::sendStr(int monitor, string str) {
 
 string travelMonitorClient::receiveStr(int monitor) {
     int fd = this->monitors->getSocketFD(monitor);
-    cout << "fd=" << fd << endl;
     int sizeOfStr;
     if (recv(fd, &sizeOfStr, sizeof(int), MSG_WAITALL) == -1)
         if (errno != 4)
             cout << "receiveStrError in reading sizeOfStr with errno=" << errno << endl;
-
+    cout << sizeOfStr << endl;
     string str = "";
     if (sizeOfStr > this->socketBufferSize) {
         for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
@@ -667,10 +678,14 @@ void travelMonitorClient::addRequest(string c, string v, date dt, bool s) {
 
 void travelMonitorClient::addNewVirus(string virusName)
 {
+    cout << "ADDING " << virusName << endl;
     if (this->viruses->search(virusName) == nullptr) // if we dont have that virus add it to the list of viruses
     {                                         // and make the bloom filter and the skiplist for that virus
+        cout << "ADDED0" << endl;
         this->viruses = this->viruses->add(virusName);
+        cout << "ADDED1" << endl;
         this->blooms = this->blooms->add(this->viruses);
+        cout << "ADDED2" << endl;
     }
 }
 
