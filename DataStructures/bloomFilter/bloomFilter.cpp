@@ -145,24 +145,16 @@ bloomFilterList::~bloomFilterList()
 
 bloomFilterList* bloomFilterList::add(stringList* virus)
 {
-    cout << "Adding to bloom filter" << endl;
     if (this->virus == nullptr)
     {
-        cout << "in if" << endl;
         this->virus = virus;
         this->bloom = new bloomFilter(this->bloomSize);
         checkNew(this->bloom);
-        cout << "done add0" << endl;
         return this;
     }
-    cout << "out if " << this->bloomSize << endl;
     bloomFilterList* new_node = new bloomFilterList(virus, this->bloomSize);
-    cout << "after new" << endl;
     checkNew(new_node);
-    cout << "check new" << endl;
     new_node->next = this;
-    cout << "set next" << endl;
-    cout << "done add1" << endl;
     return new_node;
 }
 

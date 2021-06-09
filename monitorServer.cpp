@@ -571,7 +571,7 @@ void monitorServer::sendBlooms() {
     stringList* temp = this->viruses;
     while (temp != nullptr) {
         sendStr(temp->getString());
-        cout << "m " << temp->getString() << endl;
+        // cout << "m " << temp->getString() << endl;
         temp = temp->getNext();
     }
     int end = -1;
@@ -581,7 +581,7 @@ void monitorServer::sendBlooms() {
     temp = this->viruses;
     while (temp != nullptr) {
         bloomFilter* bloomV = this->blooms->getBloom(temp);
-        cout << "sedning bloom v " << temp->getString() << endl;
+        // cout << "sedning bloom v " << temp->getString() << endl;
         sendStr(temp->getString());
         int pos = 0;
         char* bloomArray = bloomV->getArray();
@@ -599,7 +599,7 @@ void monitorServer::sendBlooms() {
 
         temp = temp->getNext();
     }
-    cout << "end" << endl;
+    // cout << "end" << endl;
     sendStr("END BLOOMS");
     receiveDone();
 }

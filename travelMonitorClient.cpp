@@ -189,7 +189,7 @@ void travelMonitorClient::openSockets() {
             connectStatus = connect(sock, clientptr, clientlen);
         while (connectStatus < 0);
         cout << "connected to monitor " << i << endl;
-        cout << "fd " << sock << endl;
+        // cout << "fd " << sock << endl;
         this->addFdToMonitor(i, sock);
     }
 }
@@ -236,13 +236,10 @@ void travelMonitorClient::receiveBlooms(int i) {
     int end = 0;
     while (1) {
         string virus = receiveManyStr(i, &end);
-        cout << virus << endl;
         if (end == -1 || virus == "")
             break;
-        cout << 1 << endl;
         addNewVirus(virus);
-        cout << 2 << endl;
-        // cout << "Got virus=" << virus << " from Monitor " << i << endl;
+        cout << "Got virus=" << virus << " from Monitor " << i << endl;
     }
     cout << "Updating blooms from Monitor " << i << endl;
     while (1) {
@@ -250,13 +247,12 @@ void travelMonitorClient::receiveBlooms(int i) {
         string virus = receiveStr(i);
 
         if (virus.compare("END BLOOMS") == 0) {
-            cout << "Done updating blooms" << endl;
+            cout << "\033[1;32mDone updating blooms\033[0m\n" << endl;
             break;
         }
 
         int pos = 0;
         int fd = this->monitors->getSocketFD(i);
-        cout << "testtt " << virus << endl;
         char* bloomArray = this->blooms->getBloom(this->viruses->search(virus))->getArray();
         for (int i = 0;i <= this->sizeOfBloom / this->socketBufferSize;i++) {
             char buff[this->socketBufferSize];
@@ -323,7 +319,7 @@ void travelMonitorClient::startMenu() {
 
 void travelMonitorClient::travelRequest(string* arguments, int length) {
     cout << endl;
-    cout << "- Selected: /travelRequest" << endl;
+    cout << "\033[1;33m- Selected: /travelRequest\033[0m\n" << endl;
     if (length == 6)
     {
         int id;
@@ -362,7 +358,7 @@ void travelMonitorClient::travelRequest(string* arguments, int length) {
             res = this->blooms->getBloom(v)->check(id);
         else
         {
-            cout << "REQUEST REJECTED – YOU ARE NOT VACCINATED" << endl;
+            cout << "\033[1;31mREQUEST REJECTED – YOU ARE NOT VACCINATED\033[0m\n" << endl;
             this->addRequest(countryFrom, virusName, checkDate, false);
             return;
         }
@@ -380,7 +376,7 @@ void travelMonitorClient::travelRequest(string* arguments, int length) {
                 string res = receiveStr(countryToMonitor->search(countryFrom)->getMonitor());
                 // cout << res << endl;
                 if (res == "NO") {
-                    cout << "REQUEST REJECTED – YOU ARE NOT VACCINATED" << endl;
+                    cout << "\033[1;31mREQUEST REJECTED – YOU ARE NOT VACCINATED\033[0m\n" << endl;
                     this->addRequest(countryFrom, virusName, checkDate, false);
                     return;
                 }
@@ -401,29 +397,29 @@ void travelMonitorClient::travelRequest(string* arguments, int length) {
                 total2 = total2 + year2 + month2 + day2;
 
                 if (total2 - total1 > 600) {
-                    cout << "REQUEST REJECTED – YOU WILL NEED ANOTHER VACCINATION BEFORE TRAVEL DATE" << endl;
+                    cout << "\033[1;36mREQUEST REJECTED – YOU WILL NEED ANOTHER VACCINATION BEFORE TRAVEL DATE\033[0m\n" << endl;
                     this->addRequest(countryFrom, virusName, checkDate, false);
                     return;
                 }
                 else if (total2 - total1 >= 0) {
-                    cout << "REQUEST ACCEPTED – HAPPY TRAVELS" << endl;
+                    cout << "\033[1;32mREQUEST ACCEPTED – HAPPY TRAVELS\033[0m\n" << endl;
                     this->addRequest(countryFrom, virusName, checkDate, true);
                     return;
                 }
                 else {
-                    cout << "REQUEST REJECTED – YOU ARE NOT VACCINATED" << endl;
+                    cout << "\033[1;31mREQUEST REJECTED – YOU ARE NOT VACCINATED\033[0m\n" << endl;
                     this->addRequest(countryFrom, virusName, checkDate, false);
                     return;
                 }
             }
             else {
-                cout << "REQUEST REJECTED – YOU ARE NOT VACCINATED" << endl;
+                cout << "\033[1;31mREQUEST REJECTED – YOU ARE NOT VACCINATED\033[0m\n" << endl;
                 this->addRequest(countryFrom, virusName, checkDate, false);
                 return;
             }
         }
         else {
-            cout << "REQUEST REJECTED – YOU ARE NOT VACCINATED" << endl;
+            cout << "\033[1;31mREQUEST REJECTED – YOU ARE NOT VACCINATED\033[0m\n" << endl;
             this->addRequest(countryFrom, virusName, checkDate, false);
             return;
         }
@@ -436,8 +432,7 @@ void travelMonitorClient::travelRequest(string* arguments, int length) {
 
 void travelMonitorClient::travelStats(string* arguments, int length) {
     cout << endl;
-    cout << "- Selected: /travelStats" << endl;
-
+    cout << "\033[1;33m- Selected: /travelStats\033[0m\n" << endl;
     if (!(length == 4 || length == 5)) {
         cout << "ERROR 3-4 Arguments must be given" << endl;
         cout << "ERROR Total arguments given was: " << length - 1 << endl;
@@ -480,9 +475,9 @@ void travelMonitorClient::travelStats(string* arguments, int length) {
             }
             temp = temp->getNext();
         }
-        cout << "TOTAL REQUESTS " << t + f << endl;
-        cout << "ACCEPTED " << t << endl;
-        cout << "REJECTED " << f << endl;
+        cout << "\033[1;35mTOTAL REQUESTS \033[0m" << t + f << endl;
+        cout << "\033[1;32mACCEPTED \033[0m" << t << endl;
+        cout << "\033[1;31mREJECTED \033[0m" << f << endl;
         cout << endl;
     }
     else if (length == 5) {
@@ -498,9 +493,9 @@ void travelMonitorClient::travelStats(string* arguments, int length) {
             }
             temp = temp->getNext();
         }
-        cout << "TOTAL REQUESTS " << t + f << endl;
-        cout << "ACCEPTED " << t << endl;
-        cout << "REJECTED " << f << endl;
+        cout << "\033[1;35mTOTAL REQUESTS \033[0m" << t + f << endl;
+        cout << "\033[1;32mACCEPTED \033[0m" << t << endl;
+        cout << "\033[1;31mREJECTED \033[0m" << f << endl;
         cout << endl;
     }
     else {
@@ -511,8 +506,7 @@ void travelMonitorClient::travelStats(string* arguments, int length) {
 
 void travelMonitorClient::addVaccinationRecords(string* arguments, int length) {
     cout << endl;
-    cout << "- Selected: /addVaccinationRecords" << endl;
-
+    cout << "\033[1;33m- Selected: /addVaccinationRecords\033[0m\n" << endl;
     if (length == 2) {
         string country = arguments[1];
         cout << "- country: " << country << endl;
@@ -533,8 +527,7 @@ void travelMonitorClient::addVaccinationRecords(string* arguments, int length) {
 
 void travelMonitorClient::searchVaccinationStatus(string* arguments, int length) {
     cout << endl;
-    cout << "- Selected: /searchVaccinationStatus" << endl;
-
+    cout << "\033[1;33m- Selected: /searchVaccinationStatus\033[0m\n" << endl;
     if (length == 2) {
         cout << "- citizenID: " << arguments[1] << endl;
         cout << endl;
@@ -603,7 +596,7 @@ string travelMonitorClient::receiveStr(int monitor) {
     if (recv(fd, &sizeOfStr, sizeof(int), MSG_WAITALL) == -1)
         if (errno != 4)
             cout << "receiveStrError in reading sizeOfStr with errno=" << errno << endl;
-    cout << sizeOfStr << endl;
+    // cout << sizeOfStr << endl;
     string str = "";
     if (sizeOfStr > this->socketBufferSize) {
         for (int i = 0;i <= sizeOfStr / this->socketBufferSize;i++) {
@@ -678,14 +671,14 @@ void travelMonitorClient::addRequest(string c, string v, date dt, bool s) {
 
 void travelMonitorClient::addNewVirus(string virusName)
 {
-    cout << "ADDING " << virusName << endl;
+    // cout << "ADDING " << virusName << endl;
     if (this->viruses->search(virusName) == nullptr) // if we dont have that virus add it to the list of viruses
     {                                         // and make the bloom filter and the skiplist for that virus
-        cout << "ADDED0" << endl;
+        // cout << "ADDED0" << endl;
         this->viruses = this->viruses->add(virusName);
-        cout << "ADDED1" << endl;
+        // cout << "ADDED1" << endl;
         this->blooms = this->blooms->add(this->viruses);
-        cout << "ADDED2" << endl;
+        // cout << "ADDED2" << endl;
     }
 }
 
