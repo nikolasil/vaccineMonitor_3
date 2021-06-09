@@ -5,23 +5,13 @@
 
 Makefile is included. Use the command **make** to compile the source code.
 
-To run the application use: **./travelMonitorClient -m numMonitor -b bufferSize -c cyclicBufferSize -s sizeOfBloom -i input_dir -t numThreads**
+To run the application use: **./travelMonitorClient -m numMonitor -b socketBufferSize -c cyclicBufferSize -s sizeOfBloom -i input_dir/ -t numThreads**
 
 > *Note* that the order of the arguments doesn't matter.
-
----
 
 Everything is the same with exercise 2 but instead of pipes there are networking sockets and the servers process the records with threads.
 
 ---
-
-### **General**
-
-
-
----
-
-
 
 ### **Structure & Classes**
 
@@ -194,6 +184,9 @@ At the start i check:
 
 If the virus is not in the virus list it is obvious we dont have to look the bloom filter to see that this id has not made the virus so return **REQUEST REJECTED – YOU ARE NOT VACCINATED**.
 If we have that virus we hash the id and check the 16 bits to be set to 1. If all of them are 1 then we send the command to the correct Monitor to take an answer.
+Then if the citizen has done the virus we check if it has passed 6 months.
+
+I store every request in a list so i can make the statistics in the second command.
 
 #### /travelStats
 
@@ -203,7 +196,7 @@ I check every request that i have in the request list and abjust two counts acco
 
 Just send the command to the correct monitor.
 The monitor cathes it and loops throw all the files and put the not processed files to the cyclic buffer in the same way as before.
-Then the threads take te files and update the structures.
+Then the threads take the files and update the structures.
 Then all the bloomfilters are send back to the travelMonitorClient.
 
 #### /searchVaccinationStatus
