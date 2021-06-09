@@ -82,6 +82,10 @@ void travelMonitorClient::roundRobinCountriesandPutToList() {
 
     struct dirent** coutriesDir;
     count = scandir(this->input_dir.c_str(), &coutriesDir, nullptr, alphasort);
+    if ((count - 2) < this->numMonitors) {
+        this->numMonitors = count - 2;
+        cout << "creating only " << this->numMonitors << " monitors" << endl;
+    }
     if (count < 0)
         perror("error in scandir");
     else {
