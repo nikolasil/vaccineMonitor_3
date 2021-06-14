@@ -331,7 +331,7 @@ void monitorServer::openThreads() {
     for (int i = 0; i < this->numThreads; i++) {
         int* t_id = new int();
         *t_id = i;
-        cout << "creating thread " << i << " " << *t_id << endl;
+        // cout << "creating thread " << i << " " << *t_id << endl;
         if (pthread_create(&threads[i], nullptr, threadFunc, t_id) != 0) {
             perror("create thread");
             exit(-1);
@@ -394,7 +394,7 @@ monitorServer::~monitorServer() {
 void monitorServer::openPathsByThreads(int id) {
     while (true) {
         string FILE = this->buff->take();
-        cout << id << " took " << FILE << endl;
+        // cout << id << " took " << FILE << endl;
         if (FILE == "") {
             // cout << "[" << id << "] in if exit" << endl;
             this->buff->singalFull();
